@@ -7,5 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "dns-packet": "git+https://github.com/Arachnid/dns-packet.git",
+    "ethereumjs-util": "^5.2.0",
+    "js-base64": "^2.4.3"
+  }
 }
