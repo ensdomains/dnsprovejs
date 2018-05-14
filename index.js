@@ -188,8 +188,22 @@ function display(r){
   var header = [r.name, r.ttl, r.class, r.type];
   var data = Object.values(r.data);
   var row = header.concat(data);
+  var type;
   row.unshift("//");
-  row[row.length -1] = Base64.encode(row[row.length -1].toString('hex'));
+  switch(r.type){
+    case 'DNSKEY':
+      type = 'base64';
+      break;
+    case 'RRSIG':
+      type = 'base64';
+      break;
+    case 'DS':
+      type = 'hex';
+      break;
+    default:
+      break;
+  }
+  row[row.length -1] = row[row.length -1].toString(type);
   return row.join("\t");
 }
 
@@ -197,9 +211,7 @@ function pack(rrset, sig) {
   var sigwire = packet.rrsig.encode(sig.data);
   var rrdata  = rawSignatureData(rrset, sig);
   var concatenated = Buffer.concat([sigwire, rrdata]);
-  // this is possibly wrong;
-  var sigEncoded = sig.data.signature;
-  // var sigEncoded = Base64.encode(sig.data.signature);
+  var sigEncoded = sig.data.signature.toString('base64');
   return [concatenated, sigEncoded];
 }
 
@@ -229,7 +241,6 @@ queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
       console.log(display(r));
     })
     var packed = pack(result[1], result[0]).map((p)=>{return p.toString('hex')});
-    // debugger;
     packed.unshift(result[0].name);
     console.log(packed);
     console.log("\n");
