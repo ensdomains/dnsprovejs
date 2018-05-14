@@ -61,8 +61,6 @@ async function queryWithProof(qtype, name){
   let r = await query(qtype, name);
   let sigs = await filterRRs(r.answers, 'RRSIG');
   let rrs = await getRRset(r.answers, name, qtype).catch((e)=>{ console.log("**ERROR", e)});
-  // console.log('INFO ', qtype, name, r.answers.length, sigs.length, rrs.length);
-
   let ret;
   // TODO: raise an error if sig nor rrs do not exit.
   for(const sig of sigs){
@@ -146,7 +144,7 @@ async function verifyWithDS(key) {
     return (anchor.name == key.name) &&
            (anchor.data.algorithm == key.data.algorithm) &&
            (anchor.data.keyTag == keyTag) &&
-           (anchor.data.digest.toString('hex').toLowerCase() == digest.toString('hex').toLowerCase())
+           (digest.equals(anchor.data.digest))
   })
   // TODO: Check supportsDigest(ds.DigestType) {
   if(matched && matched.length > 0){
@@ -178,7 +176,8 @@ async function getRRset(rrs, name, qtype){
 }
 
 async function getDNS(buf) {
-  let url = 'https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat&dns=';
+  // let url = 'https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat&dns=';
+  let url = 'https://dns.google.com/experimental?ct=application/dns-udpwireformat&dns=';
   let response = await axios.get(url + buf.toString('base64'), { responseType:'arraybuffer' })
   let decoded = packet.decode(response.data);
   return decoded
@@ -208,11 +207,13 @@ function display(r){
 }
 
 function pack(rrset, sig) {
-  var sigwire = packet.rrsig.encode(sig.data);
+  var header = 2;
+  var sigEncoded = packet.rrsig.encode(sig.data);  
+  var off = sigEncoded.readInt8(1);
+  var sigwire = sigEncoded.slice(header, off + header);
   var rrdata  = rawSignatureData(rrset, sig);
-  var concatenated = Buffer.concat([sigwire, rrdata]);
-  var sigEncoded = sig.data.signature.toString('base64');
-  return [concatenated, sigEncoded];
+  sigwire = Buffer.concat([sigwire, rrdata]);
+  return [sigwire, sig.data.signature];
 }
 
 function rawSignatureData(rrset, sig) {
@@ -224,14 +225,10 @@ function rawSignatureData(rrset, sig) {
         name: r.name.toLowerCase(), // (2)
         ttl: sig.data.originalTTL   // (5)
       });
-      return r1;
-    })
-    .sort((a,b)=>{ return a.name - b.name })
-    .map((r)=>{ 
-      var encoder = packet.record(r.type);
-      return encoder.encode(r.data);
-    })
-  return Buffer.concat(encoded);
+      return packet.answer.encode(r1);
+    }).sort((a,b)=>{ return a - b })
+
+    return Buffer.concat(encoded);
 }
 
 queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
@@ -240,9 +237,20 @@ queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
     result[1].forEach((r)=>{
       console.log(display(r));
     })
-    var packed = pack(result[1], result[0]).map((p)=>{return p.toString('hex')});
+    
+    packed1 = pack(result[1], result[0])
+    packed = packed1.map((p)=>{
+      return p.toString('hex')
+    });
+    var name = result[0].name;
+    if(name != '.'){
+      name = name +  '.';
+    }
+    var data = packed[0];
+    var sig = packed[1];
     packed.unshift(result[0].name);
-    console.log(packed);
+    // console.log(packed);
+    console.log(`[\"${name}\", \"${data}\", \"${sig}\"],\n`)
     console.log("\n");
   })
 }).catch((e)=>{
