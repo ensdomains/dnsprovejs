@@ -59,14 +59,15 @@ async function query(qtype, name){
     
 async function queryWithProof(qtype, name){
   let r = await query(qtype, name);
+  console.log('* queryWithProof', qtype, name, r.answers.length)
   let sigs = await filterRRs(r.answers, 'RRSIG');
   let rrs = await getRRset(r.answers, name, qtype).catch((e)=>{ console.log("**ERROR", e)});
   let ret;
-  // TODO: raise an error if sig nor rrs do not exit.
   for(const sig of sigs){
-    ret = await verifyRRSet(sig, rrs).catch((e)=>{ console.log("*** ERROR at verifyRRSet") });
+    ret = await verifyRRSet(sig, rrs);
     if(ret){
       ret.push([sig, rrs]);
+      return ret;
     }
     // TODO: warn that it failed to verify RRSET
     // console.warn('Failed to verify RRSET');
@@ -81,33 +82,41 @@ async function verifyRRSet(sig, rrs) {
   let sigdata = sig.data;
   let rrsdata = rrs[0].data[0];
   let sets;
-  let all_rrsdata = rrs;
-  let logs = [];
   let keys = [];
   let signersName = sigdata.signersName;
 
   if(sigHeaderName == sigdata.signersName && rrsHeaderRtype == 'DNSKEY') {
-		keys = rrs;
+    keys = rrs;
 	}else{
-		// Find the keys that signed this RRSET
-    sets = await queryWithProof('DNSKEY', sigdata.signersName).catch((e)=>{ console.log("** ERROR at DNSKEY", e,)});;
+    // Find the keys that signed this RRSET
+    sets = await queryWithProof('DNSKEY', sigdata.signersName);
     if(sets){
-      keys = sets[sets.length - 1]
+      keys = sets[sets.length - 1][1];
     }else{
-      console.log("ERR")
+      console.log("**.* ERR")
     }
   }
-
   for(const key of keys){
-    // TODO
-    // 	if(key.data.algorithm != sig.data.algorithm || key.data.keyTag != sig.data.keyTag || key.name != sig.data.signerName) {
-    // 		continue
-    // 	}
+    var keytag;
+    if (key.data && key.data.keyTag){
+      keytTag = key.data.keyTag;
+    }else{
+      if(!key.name){
+        debugger;
+      }
+      var header = getHeader(key);
+      var digest = getDigest(key.name, header);
+      var keyTag = getKeyTag(header);
+    }
+    if(key.data.algorithm != sig.data.algorithm || keyTag != sig.data.keyTag || key.name != sig.data.signersName) {
+      continue;
+    }
+
     // TODO
     // sig.verify(key, rrs)
     if (sig.name == sig.data.signersName) {
       // RRSet is self-signed; look for DS records in parent zones to verify
-      sets = await verifyWithDS(key).catch((e)=>{ console.log("** ERROR at verifyWithDS", e,)});
+      sets = await verifyWithDS(key)
     }
   }
   return sets;
@@ -131,15 +140,23 @@ function getKeyTag(input){
       keytag += v << 8
     }
   }
-  keytag += (keytag >> 16) & 0xFFFF
-  keytag &= 0xFFFF
+  keytag += (keytag >> 16) & 0xFFFF;
+  keytag &= 0xFFFF;
   return keytag;
 }
 
 async function verifyWithDS(key) {
-  var header = getHeader(key);
-  var digest = getDigest(key.name, header);
-  var keyTag = getKeyTag(header);
+  var keytag;
+  if (key.data.keyTag){
+    keytTag = key.data.keyTag;
+  }else{
+    if(!key){
+      debugger;
+    }
+    var header = getHeader(key);
+    var digest = getDigest(key.name, header);
+    var keyTag = getKeyTag(header);
+  }
   var matched = TRUST_ANCHORS.filter((anchor)=>{
     return (anchor.name == key.name) &&
            (anchor.data.algorithm == key.data.algorithm) &&
@@ -154,16 +171,14 @@ async function verifyWithDS(key) {
   // Look up the DS record
   sets = await queryWithProof('DS', key.name);
   // TODO: Validate DS records that validate DNSKEY
-  // for _, ds := range sets[len(sets)-1].Rrs {
-	// 	ds := ds.(*dns.DS)
-	// 	if !client.supportsDigest(ds.DigestType) {
-	// 		continue
-	// 	}
-	// 	if strings.ToLower(key.ToDS(ds.DigestType).Digest) == strings.ToLower(ds.Digest) {
-	// 		return sets, nil
-	// 	}
-	// }
-  // return nil, fmt.Errorf("Could not find any DS records that validate %s DNSKEY %s (%s/%d)", dns.ClassToString[key.Header().Class], key.Header().Name, dns.AlgorithmToString[key.Algorithm], keytag)
+  sets[sets.length-1][1].forEach((ds)=>{
+    // 	if !client.supportsDigest(ds.DigestType) {
+    // 		continue
+    // 	}
+    if(ds.data.digest.compare(digest)){
+      return sets;
+    }
+  })
   return sets;
 }
 
@@ -237,7 +252,6 @@ queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
     result[1].forEach((r)=>{
       console.log(display(r));
     })
-    
     packed1 = pack(result[1], result[0])
     packed = packed1.map((p)=>{
       return p.toString('hex')
@@ -249,7 +263,6 @@ queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
     var data = packed[0];
     var sig = packed[1];
     packed.unshift(result[0].name);
-    // console.log(packed);
     console.log(`[\"${name}\", \"${data}\", \"${sig}\"],\n`)
     console.log("\n");
   })
