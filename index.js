@@ -70,9 +70,8 @@ async function queryWithProof(qtype, name){
       return ret;
     }
     // TODO: warn that it failed to verify RRSET
-    // console.warn('Failed to verify RRSET');
   }
-  return ret;
+  console.warn('Failed to verify RRSET');
 }
 
 async function verifyRRSet(sig, rrs) {
@@ -97,17 +96,10 @@ async function verifyRRSet(sig, rrs) {
     }
   }
   for(const key of keys){
-    var keytag;
-    if (key.data && key.data.keyTag){
-      keytTag = key.data.keyTag;
-    }else{
-      if(!key.name){
-        debugger;
-      }
-      var header = getHeader(key);
-      var digest = getDigest(key.name, header);
-      var keyTag = getKeyTag(header);
-    }
+    var header = getHeader(key);
+    var digest = getDigest(key.name, header);
+    var keyTag = getKeyTag(header);
+
     if(key.data.algorithm != sig.data.algorithm || keyTag != sig.data.keyTag || key.name != sig.data.signersName) {
       continue;
     }
@@ -146,17 +138,9 @@ function getKeyTag(input){
 }
 
 async function verifyWithDS(key) {
-  var keytag;
-  if (key.data.keyTag){
-    keytTag = key.data.keyTag;
-  }else{
-    if(!key){
-      debugger;
-    }
-    var header = getHeader(key);
-    var digest = getDigest(key.name, header);
-    var keyTag = getKeyTag(header);
-  }
+  var header = getHeader(key);
+  var digest = getDigest(key.name, header);
+  var keyTag = getKeyTag(header);
   var matched = TRUST_ANCHORS.filter((anchor)=>{
     return (anchor.name == key.name) &&
            (anchor.data.algorithm == key.data.algorithm) &&
