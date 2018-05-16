@@ -206,13 +206,13 @@ function display(r){
 }
 
 function pack(rrset, sig) {
-  var header = 2;
-  var sigEncoded = packet.rrsig.encode(sig.data);  
-  var off = sigEncoded.readInt8(1);
-  var sigwire = sigEncoded.slice(header, off + header);
+  var lengthField = 2;
+  const s1 = Object.assign({}, sig.data, {signature: new Buffer(0)});
+  s1.signature = new Buffer(0);
+  var sigEncoded = packet.rrsig.encode(s1);  
+  var sigwire = sigEncoded.slice(lengthField);
   var rrdata  = rawSignatureData(rrset, sig);
-  sigwire = Buffer.concat([sigwire, rrdata]);
-  return [sigwire, sig.data.signature];
+  return [Buffer.concat([sigwire, rrdata]), sig.data.signature];
 }
 
 function rawSignatureData(rrset, sig) {
@@ -225,8 +225,9 @@ function rawSignatureData(rrset, sig) {
         ttl: sig.data.originalTTL   // (5)
       });
       return packet.answer.encode(r1);
-    }).sort((a,b)=>{ return a - b })
-
+    }).sort((a,b)=>{
+      return a.compare(b);
+    })
     return Buffer.concat(encoded);
 }
 
