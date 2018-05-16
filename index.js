@@ -229,26 +229,5 @@ function rawSignatureData(rrset, sig) {
     return Buffer.concat(encoded);
 }
 
-queryWithProof('TXT', '_ens.ethlab.xyz').then((results, error)=>{
-  results.forEach((result)=>{ 
-    console.log(display(result[0]));
-    result[1].forEach((r)=>{
-      console.log(display(r));
-    })
-    packed1 = pack(result[1], result[0])
-    packed = packed1.map((p)=>{
-      return p.toString('hex')
-    });
-    var name = result[0].name;
-    if(name != '.'){
-      name = name +  '.';
-    }
-    var data = packed[0];
-    var sig = packed[1];
-    packed.unshift(result[0].name);
-    console.log(`[\"${name}\", \"${data}\", \"${sig}\"],\n`)
-    console.log("\n");
-  })
-}).catch((e)=>{
-  console.log('error', e);
-})
+
+module.exports = {queryWithProof, pack, display}
