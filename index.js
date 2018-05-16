@@ -106,7 +106,7 @@ async function verifyRRSet(sig, rrs) {
 
     // TODO
     // sig.verify(key, rrs)
-    if (sig.name == sig.data.signersName) {
+    if (sig.name == sig.data.signersName && rrsHeaderRtype == 'DNSKEY') {
       // RRSet is self-signed; look for DS records in parent zones to verify
       sets = await verifyWithDS(key)
     }
@@ -175,7 +175,6 @@ async function getRRset(rrs, name, qtype){
 }
 
 async function getDNS(buf) {
-  // let url = 'https://cloudflare-dns.com/dns-query?ct=application/dns-udpwireformat&dns=';
   let url = 'https://dns.google.com/experimental?ct=application/dns-udpwireformat&dns=';
   let response = await axios.get(url + buf.toString('base64'), { responseType:'arraybuffer' })
   let decoded = packet.decode(response.data);
