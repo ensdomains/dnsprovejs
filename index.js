@@ -1,7 +1,6 @@
 var packet = require('dns-packet')
 var axios = require('axios')
 var util = require('ethereumjs-util');
-var Base64 = require('js-base64').Base64;
 var SUPPORTED_ALGORITHM = 8;
 var SUPPORTED_DIGESTS = 2;
 var TRUST_ANCHORS = [
