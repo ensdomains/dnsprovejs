@@ -8,7 +8,7 @@
 ## Usage
 
 ```js
-dnsprove = require('./index.js');
+dnsprove = require('dnsprove');
 dnsprove.queryWithProof('TXT', '_ens.matoken.xyz').then((results, error)=>{
   results.forEach((result)=>{ 
     console.log(dnsprove.display(result[0]));
