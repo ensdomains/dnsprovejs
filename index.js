@@ -176,7 +176,7 @@ async function getRRset(rrs, name, qtype){
 async function getDNS(buf) {
   let url = 'https://dns.google.com/experimental?ct=application/dns-udpwireformat&dns=';
   let response = await axios.get(url + buf.toString('base64'), { responseType:'arraybuffer' })
-  let decoded = packet.decode(response.data);
+  let decoded = packet.decode(Buffer.from(response.data));
   return decoded
 }
 
