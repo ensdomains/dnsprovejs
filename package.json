@@ -11,6 +11,11 @@
   "dependencies": {
     "axios": "^0.18.0",
     "dns-packet": "git+https://github.com/makoto/dns-packet.git",
+    "dnssec-oracle": "github:ensdomains/dnssec-oracle#npm",
+    "dnssec-oracle-npm": "0.0.1",
     "ethereumjs-util": "^5.2.0"
+  },
+  "devDependencies": {
+    "truffle": "^4.1.8"
   }
 }
