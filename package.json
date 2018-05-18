@@ -9,11 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.18.0",
-    "dns-packet": "git+https://github.com/makoto/dns-packet.git",
+    "dns-packet": "github:arachnid/dns-packet",
     "dnssec-oracle": "github:ensdomains/dnssec-oracle#npm",
     "dnssec-oracle-npm": "0.0.1",
-    "ethereumjs-util": "^5.2.0"
+    "es6-promise": "^4.2.4",
+    "ethereumjs-util": "^5.2.0",
+    "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
     "truffle": "^4.1.8"

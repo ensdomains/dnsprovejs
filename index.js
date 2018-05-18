@@ -1,4 +1,7 @@
-var packet = require('dns-packet')
+require('es6-promise').polyfill();
+require('isomorphic-fetch');
+
+var packet = require('dns-packet');
 var axios = require('axios')
 var util = require('ethereumjs-util');
 var SUPPORTED_ALGORITHM = 8;
@@ -175,8 +178,8 @@ async function getRRset(rrs, name, qtype){
 
 async function getDNS(buf) {
   let url = 'https://dns.google.com/experimental?ct=application/dns-udpwireformat&dns=';
-  let response = await axios.get(url + buf.toString('base64'), { responseType:'arraybuffer' })
-  let decoded = packet.decode(Buffer.from(response.data));
+  let response = await fetch(url + buf.toString('base64'));
+  let decoded = packet.decode(Buffer.from(await response.buffer()));
   return decoded
 }
 
