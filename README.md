@@ -1,37 +1,30 @@
-
-
-
-
-
 # dnsprove.js 
+
+## Functionalities
+
+- Fetches DNS information of given domain name and type
+- Checks if the DNS reponse qualify all the information to be able to add into DNSSEC Oracle
+- Submit the entry into DSNSEC Oracle.
 
 ## Usage
 
 ```js
-dnsprove = require('dnsprove');
-dnsprove.queryWithProof('TXT', '_ens.matoken.xyz').then((results, error)=>{
-  results.forEach((result)=>{ 
-    console.log(dnsprove.display(result[0]));
-    result[1].forEach((r)=>{
-      console.log(dnsprove.display(r));
-    })
-    packed1 = dnsprove.pack(result[1], result[0])
-    packed = packed1.map((p)=>{
-      return p.toString('hex')
-    });
-    var name = result[0].name;
-    if(name != '.'){
-      name = name +  '.';
-    }
-    var data = packed[0];
-    var sig = packed[1];
-    packed.unshift(result[0].name);
-    console.log(`[\"${name}\", \"${data}\", \"${sig}\"],\n`)
-    console.log("\n");
-  })
-}).catch((e)=>{
-  console.log('error', e);
-})
+var Web3      = require('web3');
+var provider  = new Web3.providers.HttpProvider();
+var DnsProve  = require('dnsprove');
+var dnsprove  = new DnsProve(provider);
+var dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
+var oracle    = await dnsprove.getOracle('dnsoracle.eth');
+assert(dnsResult.found);
+var proofs = dnsResult.proofs;
+for(i = 0; i < proofs.length; i++){
+  var proof = proofs[i];
+  // proof.rrsig
+  // proof.signature
+  if(!await oracle.knownProof(proof)){
+    await oracle.submitProof(proof)
+  }
+}
 ```
 
 ## Testing
