@@ -2,7 +2,6 @@ require('es6-promise').polyfill();
 require('isomorphic-fetch');
 
 var packet = require('dns-packet');
-var axios = require('axios')
 var util = require('ethereumjs-util');
 var SUPPORTED_ALGORITHM = 8;
 var SUPPORTED_DIGESTS = 2;
