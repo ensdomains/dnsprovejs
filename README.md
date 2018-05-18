@@ -34,14 +34,25 @@ dnsprove.queryWithProof('TXT', '_ens.matoken.xyz').then((results, error)=>{
 })
 ```
 
-## Complete
+## Testing
 
-- Query DNS record
-- Traverse DNSKEY and RRSIG 
+Some of js libraries behaved differently depending on the environment you are in. To make sure it runs correctly, run the following commands to make sure it does not raise any errors.
 
-## Outstanding
+### Truffle
 
-- supportsAlgorithm
-- supportsDigest
-- Any error handling
-- Test
+```
+truffle test
+```
+
+### Node.js
+
+```
+node example/main.js
+```
+
+### Browser
+
+```
+npx browserify  example/main.js -t babelify --outfile example/dist/bundle.js 
+open example/index.html
+```

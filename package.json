@@ -4,7 +4,8 @@
   "description": "Port of dnsprove.go",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "example:":"browserify  example/main.js -t babelify --outfile example/dist/bundle.js" 
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +18,10 @@
     "isomorphic-fetch": "^2.2.1"
   },
   "devDependencies": {
-    "truffle": "^4.1.8"
+    "truffle": "^4.1.8",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babelify": "^8.0.0",
+    "browserify": "^16.2.2"
   }
 }

@@ -178,8 +178,15 @@ async function getRRset(rrs, name, qtype){
 async function getDNS(buf) {
   let url = 'https://dns.google.com/experimental?ct=application/dns-udpwireformat&dns=';
   let response = await fetch(url + buf.toString('base64'));
-  let decoded = packet.decode(Buffer.from(await response.buffer()));
-  return decoded
+  let buffer;
+  if(typeof(response.arrayBuffer) === "function"){
+    buffer = await response.arrayBuffer(); // browser builtin
+  }else if(typeof(response.buffer) === "function"){
+    buffer = await response.buffer(); // node, using isomorphic-fetch
+  }else{
+    throw("this environment does not have function to support buffer");
+  }  
+  return packet.decode(Buffer.from(buffer));
 }
 
 function display(r){
@@ -230,6 +237,5 @@ function rawSignatureData(rrset, sig) {
     })
     return Buffer.concat(encoded);
 }
-
 
 module.exports = {queryWithProof, pack, display}
