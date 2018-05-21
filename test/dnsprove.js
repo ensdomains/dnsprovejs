@@ -1,6 +1,7 @@
 var dnssec = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
 var dns = require("dnssec-oracle/lib/dns.js");
 var dnsprove = require('../index');
+var nvcr = require('nock-vcr');
 
 async function verifySubmission(instance, data, sig, proof) {
   if(proof === undefined) {
@@ -26,7 +27,7 @@ contract('DNSSEC', function(accounts) {
   it('should accept real DNSSEC records', async function() {
     var instance = await dnssec.deployed();
     var proof = await instance.anchors();
-
+    nvcr.insertCassette('_ens_matoken_xyz.txt');
     var results = await dnsprove.queryWithProof('TXT', '_ens.matoken.xyz')
     var test_rrsets = results.map((result)=>{ 
       packed1 = dnsprove.pack(result[1], result[0])
@@ -50,5 +51,6 @@ contract('DNSSEC', function(accounts) {
       assert.equal(tx.logs[0].event, 'RRSetUpdated');
       proof = tx.logs[0].args.rrset;
     }
+    nvcr.ejectCassette()
   });
 });
