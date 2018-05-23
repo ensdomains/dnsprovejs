@@ -16,7 +16,7 @@
     "es6-promise": "^4.2.4",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "nock-vcr": "0.0.0"
+    "sinon": "^5.0.7"
   },
   "devDependencies": {
     "truffle": "^4.1.8",

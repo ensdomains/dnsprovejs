@@ -1,6 +1,6 @@
 require('es6-promise').polyfill();
 require('isomorphic-fetch');
-
+var fs = require('fs');
 var packet = require('dns-packet');
 var util = require('ethereumjs-util');
 var SUPPORTED_ALGORITHM = 8;
@@ -31,6 +31,20 @@ var TRUST_ANCHORS = [
       digestType: 2,      
       digest: new Buffer("E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D", "hex")
     }
+  },
+  // This is dummy entry for testing
+  {
+    name: ".",
+    type: "DS",
+    // ttl: 3600,
+    class: "IN",
+    // flush: false,
+    data:{
+      keyTag: 5647,
+      algorithm: 253,
+      digestType: 253,      
+      digest: new Buffer([])
+    }
   }
 ]
 
@@ -60,7 +74,10 @@ async function query(qtype, name){
     
 async function queryWithProof(qtype, name){
   let r = await query(qtype, name);
-  console.log('* queryWithProof', qtype, name, r.answers.length)
+  console.log('* queryWithProof', qtype, name, r.answers.length);
+  for(i = 0; i<r.answers.length; i++){
+    let answer = r.answers[i];
+  }
   let sigs = await filterRRs(r.answers, 'RRSIG');
   let rrs = await getRRset(r.answers, name, qtype).catch((e)=>{ console.log("**ERROR", e)});
   let ret;
@@ -98,13 +115,10 @@ async function verifyRRSet(sig, rrs) {
   }
   for(const key of keys){
     var header = getHeader(key);
-    var digest = getDigest(key.name, header);
     var keyTag = getKeyTag(header);
-
     if(key.data.algorithm != sig.data.algorithm || keyTag != sig.data.keyTag || key.name != sig.data.signersName) {
       continue;
     }
-
     // TODO
     // sig.verify(key, rrs)
     if (sig.name == sig.data.signersName && rrsHeaderRtype == 'DNSKEY') {
@@ -119,8 +133,29 @@ function getHeader(key){
   return packet.dnskey.encode(key.data).slice(2);
 }
 
-function getDigest(name, input){
-  return util.sha256(Buffer.concat([packet.name.encode(name), input]));
+function checkDigest(anchor, name, input, digestType){
+  switch(digestType){
+    case 8:
+      let type = 'base64';
+      let digest = util.sha256(Buffer.concat([packet.name.encode(name), input]));
+      return digest.equals(anchor.data.digest)
+    case 253: // this is dummy so always returns true
+      return true;
+    default:
+      throw('NOT IMPLEMENTED')
+  }
+}
+
+function getDigest(name, input, digestType){
+  switch(digestType){
+    case 8:
+      type = 'base64';
+      return util.sha256(Buffer.concat([packet.name.encode(name), input]));
+    case 253: // this is dummy so always returns empty buffer
+      return new Buffer([17,17]);
+    default:
+      throw('NOT IMPLEMENTED')
+  }
 }
 
 function getKeyTag(input){
@@ -140,13 +175,12 @@ function getKeyTag(input){
 
 async function verifyWithDS(key) {
   var header = getHeader(key);
-  var digest = getDigest(key.name, header);
   var keyTag = getKeyTag(header);
   var matched = TRUST_ANCHORS.filter((anchor)=>{
     return (anchor.name == key.name) &&
            (anchor.data.algorithm == key.data.algorithm) &&
            (anchor.data.keyTag == keyTag) &&
-           (digest.equals(anchor.data.digest))
+           (checkDigest(anchor, key.name, header, key.data.digestType || key.data.algorithm))
   })
   // TODO: Check supportsDigest(ds.DigestType) {
   if(matched && matched.length > 0){
@@ -160,7 +194,7 @@ async function verifyWithDS(key) {
     // 	if !client.supportsDigest(ds.DigestType) {
     // 		continue
     // 	}
-    if(ds.data.digest.compare(digest)){
+    if(checkDigest(ds.data.digest, key.name, header, key.data.digestType || key.data.algorithm)){
       return sets;
     }
   })
@@ -185,8 +219,9 @@ async function getDNS(buf) {
     buffer = await response.buffer(); // node, using isomorphic-fetch
   }else{
     throw("this environment does not have function to support buffer");
-  }  
-  return packet.decode(Buffer.from(buffer));
+  }
+  let decoded = packet.decode(Buffer.from(buffer));
+  return decoded;
 }
 
 function display(r){

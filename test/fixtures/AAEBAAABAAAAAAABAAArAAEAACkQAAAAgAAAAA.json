@@ -15,21 +15,44 @@
     "questions": [
         {
             "name": ".",
-            "type": "DNSKEY",
+            "type": "DS",
             "class": "IN"
         }
     ],
-    "answers": [
+    "answers": [],
+    "authorities": [
         {
             "name": ".",
-            "type": "DNSKEY",
-            "ttl": 26450,
+            "type": "SOA",
+            "ttl": 35397,
             "class": "IN",
             "flush": false,
             "data": {
-                "flags": 256,
+                "mname": "a.root-servers.net",
+                "rname": "nstld.verisign-grs.com",
+                "serial": 2018052202,
+                "refresh": 1800,
+                "retry": 900,
+                "expire": 604800,
+                "minimum": 86400
+            }
+        },
+        {
+            "name": ".",
+            "type": "RRSIG",
+            "ttl": 35397,
+            "class": "IN",
+            "flush": false,
+            "data": {
+                "typeCovered": "SOA",
                 "algorithm": 253,
-                "key": {
+                "labels": 0,
+                "originalTTL": 86400,
+                "expiration": 1528138800,
+                "inception": 1527012000,
+                "keyTag": 1277,
+                "signersName": ".",
+                "signature": {
                     "type": "Buffer",
                     "data": []
                 }
@@ -37,33 +60,35 @@
         },
         {
             "name": ".",
-            "type": "DNSKEY",
-            "ttl": 26450,
+            "type": "NSEC",
+            "ttl": 35397,
             "class": "IN",
             "flush": false,
             "data": {
-                "flags": 257,
-                "algorithm": 253,
-                "key": {
-                    "type": "Buffer",
-                    "data": [17, 17]
-                }
+                "nextDomain": "aaa",
+                "rrtypes": [
+                    "NS",
+                    "SOA",
+                    "RRSIG",
+                    "NSEC",
+                    "DNSKEY"
+                ]
             }
         },
         {
             "name": ".",
             "type": "RRSIG",
-            "ttl": 26450,
+            "ttl": 35397,
             "class": "IN",
             "flush": false,
             "data": {
-                "typeCovered": "DNSKEY",
-                "algorithm": 253,
+                "typeCovered": "NSEC",
+                "algorithm": 8,
                 "labels": 0,
-                "originalTTL": 172800,
-                "expiration": 1528675200,
-                "inception": 1526860800,
-                "keyTag": 5647,
+                "originalTTL": 86400,
+                "expiration": 1528138800,
+                "inception": 1527012000,
+                "keyTag": 1277,
                 "signersName": ".",
                 "signature": {
                     "type": "Buffer",
@@ -72,7 +97,6 @@
             }
         }
     ],
-    "authorities": [],
     "additionals": [
         {
             "name": ".",
