@@ -4,7 +4,8 @@
   "description": "Port of dnsprove.go",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "truffle test test/dnsprove.js && jest",
+    "watch": "jest --watch",
     "example:": "browserify  example/main.js -t babelify --outfile example/dist/bundle.js"
   },
   "author": "",
@@ -19,10 +20,13 @@
     "sinon": "^5.0.7"
   },
   "devDependencies": {
-    "truffle": "^4.1.8",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
-    "browserify": "^16.2.2"
+    "browserify": "^16.2.2",
+    "jest": "^23.0.1",
+    "mocha": "^5.2.0",
+    "truffle": "^4.1.8",
+    "web3": "^1.0.0-beta.34"
   }
 }
