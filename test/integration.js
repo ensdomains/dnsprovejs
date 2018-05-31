@@ -46,9 +46,11 @@ var stub = sinon.stub(global, 'fetch').callsFake(function(input) {
 async function verifySubmission(instance, data, sig, proof) {
   if(proof === undefined) {
     proof = await instance.anchors();
+    throw('proof is not set');
   }
-
   var tx = await instance.submitRRSet(data, sig, proof);
+  console.log('data', data, 'sig', sig, 'proof', proof, 'log', tx.logs[0].args.rrset);
+
   assert.equal(parseInt(tx.receipt.status), parseInt('0x1'));
   assert.equal(tx.logs.length, 1);
   return tx;
@@ -67,6 +69,7 @@ contract('DNSSEC', function(accounts) {
   it('should accept real DNSSEC records', async function() {
     var instance = await dnssec.deployed();
     var proof = await instance.anchors();
+    console.log('ANCHOR PROOF', proof);
     var results = await dnsprove.queryWithProof('TXT', '_ens.matoken.xyz')
     results.forEach((result)=>{
       console.log(dnsprove.display(result[0]));
@@ -88,7 +91,7 @@ contract('DNSSEC', function(accounts) {
       console.log("\n");
     })
 
-    var test_rrsets = results.map((result)=>{ 
+    var test_rrsets = results.map((result)=>{
       packed1 = dnsprove.pack(result[1], result[0])
       packed = packed1.map((p)=>{
         return p.toString('hex')
@@ -100,13 +103,20 @@ contract('DNSSEC', function(accounts) {
       var data = packed[0];
       var sig = packed[1];
       packed.unshift(result[0].name);
-      return [name, data, sig]
+      return [name, result[1], data, sig]
     })
     for(var rrset of test_rrsets) {
-      var tx = await verifySubmission(instance, "0x" + rrset[1], "0x" + rrset[2], proof);
+      let name = dns.hexEncodeName(rrset[0]);
+      let type =  dns['TYPE_' + rrset[1][0].type];
+      let result = await instance.rrdata.call(type, name);
+      console.log('rrset[0] bef:', rrset[0], rrset[1][0].type, 'rrdata', result[2], 'sig', rrset[3], 'proof', proof);
+      var tx = await verifySubmission(instance, "0x" + rrset[2], "0x" + rrset[3], proof);
+      result = await instance.rrdata.call(type, name);
+      console.log('rrset[0] aft:', rrset[0], rrset[1][0].type, result[2]);
       assert.equal(tx.logs.length, 1);
       assert.equal(tx.logs[0].event, 'RRSetUpdated');
       proof = tx.logs[0].args.rrset;
+      console.log('');
     }
   });
 });
