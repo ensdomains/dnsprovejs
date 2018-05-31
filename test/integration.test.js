@@ -6,11 +6,13 @@ const packet = require('dns-packet');
 const realFetch = require('isomorphic-fetch');
 const Web3      = require('web3');
 const DnsProve  = require('../lib/dnsprover');
+
+// These are test only settings which library itself should not be aware of.
 const provider = new Web3.providers.HttpProvider("http://localhost:8545");
 const MyContract = require("../build/contracts/DNSSEC.json");
-debugger
-let network = Object.keys(MyContract.networks)[0];
-let address = MyContract.networks[network].address;
+const network = Object.keys(MyContract.networks)[0];
+const address = MyContract.networks[network].address;
+const owner = '0xe87529a6123a74320e13a6dabf3606630683c029' // assume you start ganache-cli -s 1
 
 var stub = sinon.stub(global, 'fetch').callsFake(function(input) {
   return {
@@ -55,8 +57,6 @@ async function verifySubmission(instance, data, sig, proof) {
 }
 
 describe('DNSSEC', function() {
-
-  // Test against real record
   test('should accept real DNSSEC records', async function() {
     var dnsprove  = new DnsProve(provider);
     var dnsResult = await dnsprove.lookup('_ens.matoken.xyz');
@@ -72,7 +72,7 @@ describe('DNSSEC', function() {
       let result = await oracle.knownProof(proof);
       if(parseInt(result) == 0){
         console.log(1, proof.name, proof.type, result)
-        await oracle.submitProof(proof, proofs[i-1], {from:'0xe87529a6123a74320e13a6dabf3606630683c029'})
+        await oracle.submitProof(proof, proofs[i-1], {from:owner})
         result = await oracle.knownProof(proof);
         console.log(2, proof.name, proof.type, result)
         }else{
