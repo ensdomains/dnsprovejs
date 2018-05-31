@@ -11,9 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ensdomains/dnsregistrar": "github:ensdomains/dnsregistrar",
+    "@ensdomains/dnssec-oracle": "github:ensdomains/dnssec-oracle",
     "dns-packet": "github:arachnid/dns-packet",
-    "dnssec-oracle": "github:ensdomains/dnssec-oracle#npm",
-    "dnssec-oracle-npm": "0.0.1",
     "es6-promise": "^4.2.4",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
