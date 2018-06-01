@@ -59,9 +59,8 @@ async function verifySubmission(instance, data, sig, proof) {
 contract('DNSSEC', function(accounts) {
   it('should have a default algorithm and digest set', async function() {
     var instance = await dnssec.deployed();
-    assert.notEqual(await instance.algorithms(8), "0x0000000000000000000000000000000000000000");
+    assert.notEqual(await instance.algorithms(254), "0x0000000000000000000000000000000000000000");
     assert.notEqual(await instance.algorithms(253), "0x0000000000000000000000000000000000000000");
-    assert.notEqual(await instance.digests(2), "0x0000000000000000000000000000000000000000");
     assert.notEqual(await instance.digests(253), "0x0000000000000000000000000000000000000000");
   });
 
