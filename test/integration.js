@@ -48,9 +48,10 @@ async function verifySubmission(instance, data, sig, proof) {
     proof = await instance.anchors();
     throw('proof is not set');
   }
+  console.log('input', data, sig, proof);
   var tx = await instance.submitRRSet(data, sig, proof);
-  console.log('data', data, 'sig', sig, 'proof', proof, 'log', tx.logs[0].args.rrset);
-
+  console.log('output', tx.logs[0].args.rrset);
+  // console.log('data', data, 'sig', sig, 'proof', proof, 'log', tx.logs[0].args.rrset);
   assert.equal(parseInt(tx.receipt.status), parseInt('0x1'));
   assert.equal(tx.logs.length, 1);
   return tx;
@@ -108,10 +109,11 @@ contract('DNSSEC', function(accounts) {
       let name = dns.hexEncodeName(rrset[0]);
       let type =  dns['TYPE_' + rrset[1][0].type];
       let result = await instance.rrdata.call(type, name);
-      console.log('rrset[0] bef:', rrset[0], rrset[1][0].type, 'rrdata', result[2], 'sig', rrset[3], 'proof', proof);
+      // console.log('rrset[0] bef:', rrset[0], rrset[1][0].type, 'rrdata', result[2], 'sig', rrset[3], 'proof', proof);
+      // console.log('submit', "0x" + rrset[2], "0x" + rrset[3], proof);
       var tx = await verifySubmission(instance, "0x" + rrset[2], "0x" + rrset[3], proof);
       result = await instance.rrdata.call(type, name);
-      console.log('rrset[0] aft:', rrset[0], rrset[1][0].type, result[2]);
+      console.log('rrdata:', rrset[0], rrset[1][0].type, result[2]);
       assert.equal(tx.logs.length, 1);
       assert.equal(tx.logs[0].event, 'RRSetUpdated');
       proof = tx.logs[0].args.rrset;
