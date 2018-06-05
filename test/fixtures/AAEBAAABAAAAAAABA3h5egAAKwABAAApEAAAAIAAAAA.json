@@ -63,7 +63,7 @@
                 "algorithm": 253,
                 "labels": 1,
                 "originalTTL": 86400,
-                "expiration": 1528174800,
+                "expiration": 2528174800,
                 "inception": 1527048000,
                 "keyTag": 1277,
                 "signersName": ".",
