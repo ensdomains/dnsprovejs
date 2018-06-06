@@ -1,6 +1,5 @@
 
 const dns = require("dnssec-oracle/lib/dns.js");
-const dnsprove = require('../index');
 const sinon = require('sinon')
 const fs = require('fs');
 const packet = require('dns-packet');
