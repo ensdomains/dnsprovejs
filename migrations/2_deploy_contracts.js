@@ -1,8 +1,8 @@
 var DNSSEC = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
 var dummyalgorithm = artifacts.require("dnssec-oracle/contracts/DummyAlgorithm.sol");
 var dummydigest = artifacts.require("dnssec-oracle/contracts/DummyDigest.sol");
-var ENSImplementation = artifacts.require("dnsregistrar/contracts/ENSImplementation.sol");
-var DNSRegistrar = artifacts.require("dnsregistrar/contracts/DNSRegistrar.sol");
+var ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
+var DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
 var dns = require("dnssec-oracle/lib/dns.js");
 var namehash = require('eth-ens-namehash');
 var sha3= require('web3').utils.sha3;

@@ -34,7 +34,9 @@ Some of js libraries behaved differently depending on the environment you are in
 ### Truffle
 
 ```
-truffle test
+# The migration will generate artifacts from node package into `build/contracts` which seems required step unlike running normal truffle test
+truffle migrate 
+truffle test test/integration.js
 ```
 
 ### Node.js

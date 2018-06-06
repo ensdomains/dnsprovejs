@@ -1,123 +1,94 @@
-const dnssec = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
+
 const dns = require("dnssec-oracle/lib/dns.js");
 const dnsprove = require('../index');
 const sinon = require('sinon')
 const fs = require('fs');
 const packet = require('dns-packet');
-const realFetch = require('isomorphic-fetch');
+const DnsProve  = require('../lib/dnsprover');
+const namehash = require('eth-ens-namehash');
+const DNSSEC = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
+const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
+const ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
 
-var stub = sinon.stub(global, 'fetch').callsFake(function(input) {
-  return {
-    buffer: async ()=>{
-      // eg: AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA
-      let fileName = input.split('=')[2];
-      let filePath = './test/fixtures/' + fileName + '.json';
-      if (fs.existsSync(filePath)) {
-        response = fs.readFileSync(filePath, 'utf8');
-        decoded = JSON.parse(response, (k, v) => {
-          // JSON.stringify cannot serialise Buffer as is so changes it's data format
-          // such as {data:{type:"Buffer", data:[1,2,1]}}.
-          // You need to transform back to Buffer
-          // such as {data: new Buffer([1,2,1]) }
-          if (
-            v !== null            &&
-            typeof v === 'object' && 
-            'type' in v           &&
-            v.type === 'Buffer'   &&
-            'data' in v           &&
-            Array.isArray(v.data)) {
-              v = new Buffer(v.data);
-          }
-          return v;
-        });
-        return packet.encode(decoded);
-      }else{
-        // console.log(`***Recording ${input} into ${filePath}`);
-        // let encoded = await realFetch(input);
-        // let buffer = await encoded.buffer();
-        // response = packet.decode(buffer);
-        // fs.writeFileSync(filePath, JSON.stringify(response));
-        // return buffer;
-      }
-    }
-  };
-});
-
-async function verifySubmission(instance, data, sig, proof) {
-  if(proof === undefined) {
-    proof = await instance.anchors();
-    throw('proof is not set');
-  }
-  console.log('input', data, sig, proof);
-  var tx = await instance.submitRRSet(data, sig, proof);
-  console.log('output', tx.logs[0].args.rrset);
-  // console.log('data', data, 'sig', sig, 'proof', proof, 'log', tx.logs[0].args.rrset);
-  assert.equal(parseInt(tx.receipt.status), parseInt('0x1'));
-  assert.equal(tx.logs.length, 1);
-  return tx;
+const hexEncodeTXT = function(rec) {
+  var buf = new Buffer(4096);
+  debugger;
+  var off = dns.encodeTXT(buf, 0, rec);
+  return "0x" + buf.toString("hex", 0, off);
 }
 
 contract('DNSSEC', function(accounts) {
-  it('should have a default algorithm and digest set', async function() {
-    var instance = await dnssec.deployed();
-    assert.notEqual(await instance.algorithms(254), "0x0000000000000000000000000000000000000000");
-    assert.notEqual(await instance.algorithms(253), "0x0000000000000000000000000000000000000000");
-    assert.notEqual(await instance.digests(253), "0x0000000000000000000000000000000000000000");
+  const owner = accounts[0];
+  const provider = web3.currentProvider;
+  const address =  DNSSEC.address;
+
+  let stub = sinon.stub(global, 'fetch').callsFake(function(input) {
+    return {
+      buffer: async ()=>{
+        // eg: AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA
+        let fileName = input.split('=')[2];
+  
+        let filePath = './test/fixtures/' + fileName + '.json';
+        if (fs.existsSync(filePath)) {
+          let response = fs.readFileSync(filePath, 'utf8');
+          let decoded = JSON.parse(response, (k, v) => {
+            // JSON.stringify cannot serialise Buffer as is so changes it's data format
+            // to {data:{type:"Buffer", data:[1,2,1]}}.
+            // You need to transform back to Buffer
+            // such as {data: new Buffer([1,2,1]) }
+            if (
+              v !== null            &&
+              typeof v === 'object' && 
+              'type' in v           &&
+              v.type === 'Buffer'   &&
+              'data' in v           &&
+              Array.isArray(v.data)) {
+                v = new Buffer(v.data);
+            }
+            return v;
+          });
+          // Swap address with dnsregistrar owner as only the address owner can register
+          if (decoded.answers[0].name == '_ens.matoken.xyz' && decoded.answers[0].type == 'TXT'){
+            let text = `a=${owner}`
+            decoded.answers[0].data = Buffer.from(text, 'ascii')
+          }
+          return packet.encode(decoded);
+        }
+      }
+    };
   });
 
-  // Test against real record
-  it('should accept real DNSSEC records', async function() {
-    var instance = await dnssec.deployed();
-    var proof = await instance.anchors();
-    console.log('ANCHOR PROOF', proof);
-    var results = await dnsprove.queryWithProof('TXT', '_ens.matoken.xyz')
-    results.forEach((result)=>{
-      console.log(dnsprove.display(result[0]));
-      result[1].forEach((r)=>{
-        console.log(dnsprove.display(r));
-      })
-      packed1 = dnsprove.pack(result[1], result[0])
-      packed = packed1.map((p)=>{
-        return p.toString('hex')
-      });
-      var name = result[0].name;
-      if(name != '.'){
-        name = name +  '.';
-      }
-      var data = packed[0];
-      var sig = packed[1];
-      packed.unshift(result[0].name);
-      console.log(`[\"${name}\", \"${data}\", \"${sig}\"],\n`)
-      console.log("\n");
-    })
+  it('should accept mocked DNSSEC records', async function() {
+    const registrar = await DNSRegistrar.deployed();
+    const ens =  await ENSImplementation.deployed();
 
-    var test_rrsets = results.map((result)=>{
-      packed1 = dnsprove.pack(result[1], result[0])
-      packed = packed1.map((p)=>{
-        return p.toString('hex')
-      });
-      var name = result[0].name;
-      if(name != '.'){
-        name = name +  '.';
-      }
-      var data = packed[0];
-      var sig = packed[1];
-      packed.unshift(result[0].name);
-      return [name, result[1], data, sig]
-    })
-    for(var rrset of test_rrsets) {
-      let name = dns.hexEncodeName(rrset[0]);
-      let type =  dns['TYPE_' + rrset[1][0].type];
-      let result = await instance.rrdata.call(type, name);
-      // console.log('rrset[0] bef:', rrset[0], rrset[1][0].type, 'rrdata', result[2], 'sig', rrset[3], 'proof', proof);
-      // console.log('submit', "0x" + rrset[2], "0x" + rrset[3], proof);
-      var tx = await verifySubmission(instance, "0x" + rrset[2], "0x" + rrset[3], proof);
-      result = await instance.rrdata.call(type, name);
-      console.log('rrdata:', rrset[0], rrset[1][0].type, result[2]);
-      assert.equal(tx.logs.length, 1);
-      assert.equal(tx.logs[0].event, 'RRSetUpdated');
-      proof = tx.logs[0].args.rrset;
-      console.log('');
+    // Step 1. Look up dns entry
+    const dnsprove  = new DnsProve(provider);
+    const dnsResult = await dnsprove.lookup('_ens.matoken.xyz');
+    const oracle    = await dnsprove.getOracle(address);
+    // Step 2. Checks that the result is found and is valid.
+    assert.equal(dnsResult.found, true);
+    assert.equal(dnsResult.proofs.length, 6);
+    assert.equal(dnsResult.proofs[0].name, '.');
+
+    // Step 3. Submit each proof to DNSSEC oracle
+    let proofs = dnsResult.proofs;
+    for(let i = 0; i < proofs.length; i++){
+      var proof = proofs[i];
+      let rrdata;
+      let result = await oracle.knownProof(proof);
+      assert.equal(parseInt(result), 0);
+      await oracle.submitProof(proof, proofs[i-1], {from:owner})
+      result = await oracle.knownProof(proof);
+      assert.notEqual(parseInt(result), 0);
     }
+    // Step 4. Use the last rrdata as a proof to claim the ownership
+    var proof =  '0x' + proofs[proofs.length -1].rrdata.toString('hex');
+    let name = dns.hexEncodeName("matoken.xyz.");
+    let tx = await registrar.claim(name, proof, {from:owner});
+    assert.equal(parseInt(tx.receipt.status), 1);
+    // Step 5. Confirm that the domain is owned by thw DNS record owner.
+    let result = await ens.owner.call(namehash.hash("matoken.xyz"));
+    assert.equal(result, owner);
   });
 });
