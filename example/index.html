@@ -1,10 +1,23 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-    <div id="container"></div>
-    <script src="dist/bundle.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <style>
+        #lookup-output{
+            width:100%;
+            overflow: scroll;
+        }
+    </style>
+    <body>
+        <div id="container"></div>
+        <script src="dist/bundle.js"></script>
+        <input type="text" placeholder="eg: _ens.matoken.xyz" id="lookup-input">
+        <button id="lookup-button">LookUp</button>
+        <div>
+            <h2>Lookup result</h2>
+            <pre  id="lookup-output">
+            </pre>
+        </div>
+    </body>
 </html>
