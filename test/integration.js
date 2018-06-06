@@ -67,6 +67,7 @@ contract('DNSSEC', function(accounts) {
     const oracle    = await dnsprove.getOracle(address);
     // Step 2. Checks that the result is found and is valid.
     assert.equal(dnsResult.found, true);
+    assert.equal(dnsResult.owner, owner);
     assert.equal(dnsResult.proofs.length, 6);
     assert.equal(dnsResult.proofs[0].name, '.');
 
