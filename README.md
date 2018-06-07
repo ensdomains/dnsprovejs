@@ -35,19 +35,23 @@ Some of js libraries behaved differently depending on the environment you are in
 
 ```
 # The migration will generate artifacts from node package into `build/contracts` which seems required step unlike running normal truffle test
-truffle migrate 
-truffle test test/integration.js
+truffle migrate --network test
+truffle test test/integration.js --network test
 ```
 
-### Node.js
+### Running demo
 
 ```
-node example/main.js
+# The test page extracts contract info from build/contracts/*json 
+truffle migrate --network --development
+npx browserify  lib/dnsprover.js -t babelify --outfile example/dist/bundle.js 
+cd example
+python -m SimpleHTTPServer 
+open http://localhost:8000
 ```
 
-### Browser
 
-```
-npx browserify  example/main.js -t babelify --outfile example/dist/bundle.js 
-open example/index.html
-```
+## TODO
+
+- Raise nice error message when an entry does not exist.
+- Raise nice error message when an entry is not valid.
