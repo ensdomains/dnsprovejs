@@ -1,12 +1,13 @@
 {
-  "name": "dnsprove",
+  "name": "dnsprovejs",
   "version": "1.0.0",
   "description": "Port of dnsprove.go",
   "main": "index.js",
   "scripts": {
     "test": "truffle test test/dnsprove.js && jest",
     "watch": "jest --watch",
-    "example:": "browserify  example/main.js -t babelify --outfile example/dist/bundle.js"
+    "example": "browserify example/main.js -t babelify --outfile example/dist/bundle.js",
+    "prepublishOnly": "truffle migrate && truffle networks --clean"
   },
   "author": "",
   "license": "ISC",
