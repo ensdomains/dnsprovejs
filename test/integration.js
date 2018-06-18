@@ -6,8 +6,12 @@ const packet = require('dns-packet');
 const DnsProve  = require('../lib/dnsprover');
 const namehash = require('eth-ens-namehash');
 const DNSSEC = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
-const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
+const DummyAlgorithm = artifacts.require("dnssec-oracle/contracts/DummyAlgorithm.sol");
+const DummyDigest = artifacts.require("dnssec-oracle/contracts/DummyDigest.sol");
 const ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
+const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
+const sha3= require('web3').utils.sha3;
+const tld = 'xyz';
 
 const hexEncodeTXT = function(rec) {
   var buf = new Buffer(4096);
@@ -19,8 +23,7 @@ const hexEncodeTXT = function(rec) {
 contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
   const provider = web3.currentProvider;
-  const address =  DNSSEC.address;
-
+  
   let stub = sinon.stub(global, 'fetch').callsFake(function(input) {
     return {
       buffer: async ()=>{
@@ -57,10 +60,37 @@ contract('DNSSEC', function(accounts) {
     };
   });
 
-  it('should accept mocked DNSSEC records', async function() {
-    const registrar = await DNSRegistrar.deployed();
-    const ens =  await ENSImplementation.deployed();
+  let address, ens, dummyAlgorithm, dummyDigest, registrar, dnssec;
+  beforeEach(async function(){
+    ens = await ENSImplementation.new();
+    dummyAlgorithm = await DummyAlgorithm.new();
+    dummyDigest = await DummyDigest.new();
+    let anchors = dns.anchors;
+    anchors.push(dns.dummyAnchor)
+    dnssec = await DNSSEC.new(dns.encodeAnchors(anchors));
+    address =  dnssec.address;
 
+    assert.equal(await dnssec.anchors.call(), dns.encodeAnchors(anchors));
+    registrar = await DNSRegistrar.new(dnssec.address, ens.address, dns.hexEncodeName(tld + "."), namehash.hash(tld));
+
+    assert.equal(await registrar.oracle.call(), dnssec.address);
+    assert.equal(await registrar.ens.call(), ens.address);
+    assert.equal(await registrar.rootDomain.call(), dns.hexEncodeName(tld + "."));
+    assert.equal(await registrar.rootNode.call(), namehash.hash(tld));
+
+    await ens.setSubnodeOwner(0, sha3(tld), registrar.address);
+    assert.equal(await ens.owner.call(namehash.hash(tld)), registrar.address);
+
+    await dnssec.setAlgorithm(253, dummyAlgorithm.address);
+    await dnssec.setAlgorithm(254, dummyAlgorithm.address);
+    await dnssec.setDigest(253, dummyDigest.address);
+
+    assert.equal(await dnssec.algorithms.call(253), dummyAlgorithm.address);
+    assert.equal(await dnssec.algorithms.call(254), dummyAlgorithm.address);
+    assert.equal(await dnssec.digests.call(253), dummyDigest.address);
+  })
+
+  it('1 lookup should accept mocked DNSSEC records', async function() {
     // Step 1. Look up dns entry
     const dnsprove  = new DnsProve(provider);
     const dnsResult = await dnsprove.lookup('_ens.matoken.xyz');
@@ -70,7 +100,6 @@ contract('DNSSEC', function(accounts) {
     assert.equal(dnsResult.owner, owner);
     assert.equal(dnsResult.proofs.length, 6);
     assert.equal(dnsResult.proofs[0].name, '.');
-
     // Step 3. Submit each proof to DNSSEC oracle
     let proofs = dnsResult.proofs;
     for(let i = 0; i < proofs.length; i++){
@@ -91,4 +120,5 @@ contract('DNSSEC', function(accounts) {
     let result = await ens.owner.call(namehash.hash("matoken.xyz"));
     assert.equal(result, owner);
   });
+
 });
