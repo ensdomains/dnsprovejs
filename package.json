@@ -2,7 +2,7 @@
   "name": "dnsprovejs",
   "version": "0.0.1",
   "description": "Port of dnsprove.go",
-  "main": "index.js",
+  "main": "lib/dnsprover.js",
   "scripts": {
     "test": "truffle test test/dnsprove.js && jest",
     "watch": "jest --watch",
