@@ -13,13 +13,6 @@ const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol"
 const sha3= require('web3').utils.sha3;
 const tld = 'xyz';
 
-const hexEncodeTXT = function(rec) {
-  var buf = new Buffer(4096);
-  debugger;
-  var off = dns.encodeTXT(buf, 0, rec);
-  return "0x" + buf.toString("hex", 0, off);
-}
-
 contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
   const provider = web3.currentProvider;
@@ -90,7 +83,7 @@ contract('DNSSEC', function(accounts) {
     assert.equal(await dnssec.digests.call(253), dummyDigest.address);
   })
 
-  it('1 lookup should accept mocked DNSSEC records', async function() {
+  it('lookup should accept mocked DNSSEC records', async function() {
     // Step 1. Look up dns entry
     const dnsprove  = new DnsProve(provider);
     const dnsResult = await dnsprove.lookup('_ens.matoken.xyz');
@@ -121,4 +114,18 @@ contract('DNSSEC', function(accounts) {
     assert.equal(result, owner);
   });
 
+  it('prove should return transactions which need proving', async function() {
+    const dnsprove  = new DnsProve(provider);
+    let proofs = await dnsprove.prove('_ens.matoken.xyz', address);
+    assert.equal(proofs.total, 6)
+    assert.equal(proofs.unproven, 6)
+    await proofs.submit(0); // only the first entry;
+    proofs = await dnsprove.prove('_ens.matoken.xyz', address);
+    assert.equal(proofs.total, 6)
+    assert.equal(proofs.unproven, 5)
+    await proofs.submit(); // submit all entries
+    proofs = await dnsprove.prove('_ens.matoken.xyz', address);
+    assert.equal(proofs.total, 6)
+    assert.equal(proofs.unproven, 0)
+  });
 });
