@@ -27,6 +27,16 @@ for(i = 0; i < proofs.length; i++){
 }
 ```
 
+or you can use `prove` function to batch up the process above
+
+```js
+    await dnsprove.prove('_ens.matoken.xyz', 'dnsoracle.eth');
+    // displays the number of unproven transactions which you can show to end users.
+    proofs.unproven
+    // submit all unproven proofs in a batch.
+    await proofs.submit();
+```
+
 ## Testing
 
 Some of js libraries behaved differently depending on the environment you are in. To make sure it runs correctly, run the following commands to make sure it does not raise any errors.
