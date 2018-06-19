@@ -117,8 +117,10 @@ contract('DNSSEC', function(accounts) {
   it('prove should return transactions which need proving', async function() {
     const dnsprove  = new DnsProve(provider);
     let proofs = await dnsprove.prove('_ens.matoken.xyz', address);
-    assert.equal(proofs.total, 6)
-    assert.equal(proofs.unproven, 6)
+    assert.equal(proofs.total, 6);
+    assert.equal(proofs.unproven, 6);
+    assert.equal(proofs.owner, owner);
+    assert.equal(proofs.lastProof, '0x' + proofs.proofs[5].rrdata.toString('hex'));
     await proofs.submit(0); // only the first entry;
     proofs = await dnsprove.prove('_ens.matoken.xyz', address);
     assert.equal(proofs.total, 6)
