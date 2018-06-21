@@ -12,10 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ensdomains/dnsregistrar": "0.0.1",
     "babel-polyfill": "^6.26.0",
     "dns-packet": "^5.0.0",
-    "dnsregistrar": "github:ensdomains/dnsregistrar#remove-subtree",
-    "dnssec-oracle": "github:ensdomains/dnssec-oracle#remove-namespace",
+    "dnssec-oracle": "github:ensdomains/dnssec-oracle#reuse-dns-js",
     "es6-promise": "^4.2.4",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",

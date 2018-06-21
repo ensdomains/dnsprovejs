@@ -9,8 +9,8 @@ const dns = require("@ensdomains/dnssec-oracle/lib/dns.js");
 const DNSSEC = artifacts.require("@ensdomains/dnssec-oracle/contracts/DNSSEC.sol");
 const DummyAlgorithm = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyAlgorithm.sol");
 const DummyDigest = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyDigest.sol");
-const ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
-const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
+const ENSImplementation = artifacts.require("@ensdomains/dnsregistrar/contracts/ensimplementation.sol");
+const DNSRegistrar = artifacts.require("@ensdomains/dnsregistrar/contracts/dnsregistrar.sol");
 const tld = 'xyz';
 
 contract('DNSSEC', function(accounts) {
