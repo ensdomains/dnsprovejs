@@ -7,13 +7,13 @@
     "watch": "jest --watch",
     "test": "truffle migrate && truffle test test/integration.js",
     "example": "browserify example/main.js -t babelify --outfile example/dist/bundle.js",
-    "prepublishOnly": "truffle migrate && truffle networks --clean"
+    "prepublishOnly": "truffle compile && truffle networks --clean"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-    "dns-packet": "github:arachnid/dns-packet",
+    "dns-packet": "^5.0.0",
     "dnsregistrar": "github:ensdomains/dnsregistrar#remove-subtree",
     "dnssec-oracle": "github:ensdomains/dnssec-oracle#remove-namespace",
     "es6-promise": "^4.2.4",
@@ -29,7 +29,7 @@
     "eth-ens-namehash": "^2.0.8",
     "jest": "^23.0.1",
     "mocha": "^5.2.0",
-    "truffle": "^4.1.8",
+    "truffle": "^4.1.12",
     "web3": "^1.0.0-beta.34"
   }
 }

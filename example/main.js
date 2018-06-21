@@ -4,7 +4,7 @@ const DNSSEC = require("../build/contracts/DNSSEC.json");
 const ENSImplementation = require("../build/contracts/ensimplementation.json");
 const DNSRegistrar = require("../build/contracts/dnsregistrar.json");
 const Web3      = require('web3');
-const dns = require("dnssec-oracle/lib/dns.js");
+const dns = require("@ensdomains/dnssec-oracle/lib/dns.js");
 
 function updateDOM(element, message, override){
   if(override){

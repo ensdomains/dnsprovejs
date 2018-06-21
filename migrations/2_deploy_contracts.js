@@ -1,19 +1,18 @@
 // Not requiring dummy algo and digest contracts here cause the following error when running tests
 // 'Error: Could not find artifacts for dnssec-oracle/contracts/DummyAlgorithm.sol from any sources'
-const dummyalgorithm = artifacts.require("dnssec-oracle/contracts/DummyAlgorithm.sol");
-const dummydigest = artifacts.require("dnssec-oracle/contracts/DummyDigest.sol");
-
-var DNSSEC = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
-var rsasha1 = artifacts.require("dnssec-oracle/contracts/RSASHA1Algorithm.sol");
-var rsasha256 = artifacts.require("dnssec-oracle/contracts/RSASHA256Algorithm.sol");
-var sha1 = artifacts.require("dnssec-oracle/contracts/SHA1Digest.sol");
-var sha256 = artifacts.require("dnssec-oracle/contracts/SHA256Digest.sol");
-var nsec3sha1 = artifacts.require("dnssec-oracle/contracts/SHA1NSEC3Digest.sol");
+var dummyalgorithm    = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyAlgorithm.sol");
+var dummydigest       = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyDigest.sol");
+var DNSSEC            = artifacts.require("@ensdomains/dnssec-oracle/contracts/DNSSEC.sol");
+var rsasha1           = artifacts.require("@ensdomains/dnssec-oracle/contracts/RSASHA1Algorithm.sol");
+var rsasha256         = artifacts.require("@ensdomains/dnssec-oracle/contracts/RSASHA256Algorithm.sol");
+var sha1              = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA1Digest.sol");
+var sha256            = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA256Digest.sol");
+var nsec3sha1         = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA1NSEC3Digest.sol");
 var ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
-var DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
-var dns = require("dnssec-oracle/lib/dns.js");
+var DNSRegistrar      = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
+var dns      = require("@ensdomains/dnssec-oracle/lib/dns.js");
 var namehash = require('eth-ens-namehash');
-var sha3= require('web3').utils.sha3;
+var sha3     = require('web3').utils.sha3;
 var tld = "xyz";
 let ens, algorithm, digest;
 

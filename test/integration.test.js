@@ -1,4 +1,4 @@
-const dns = require("dnssec-oracle/lib/dns.js");
+const dns = require("@ensdomains/dnssec-oracle/lib/dns.js");
 const dnsprove = require('../index');
 const sinon = require('sinon')
 const fs = require('fs');

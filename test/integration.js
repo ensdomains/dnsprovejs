@@ -1,16 +1,16 @@
 
-const dns = require("dnssec-oracle/lib/dns.js");
 const sinon = require('sinon')
 const fs = require('fs');
 const packet = require('dns-packet');
 const DnsProve  = require('../lib/dnsprover');
 const namehash = require('eth-ens-namehash');
-const DNSSEC = artifacts.require("dnssec-oracle/contracts/DNSSEC.sol");
-const DummyAlgorithm = artifacts.require("dnssec-oracle/contracts/DummyAlgorithm.sol");
-const DummyDigest = artifacts.require("dnssec-oracle/contracts/DummyDigest.sol");
+const sha3= require('web3').utils.sha3;
+const dns = require("@ensdomains/dnssec-oracle/lib/dns.js");
+const DNSSEC = artifacts.require("@ensdomains/dnssec-oracle/contracts/DNSSEC.sol");
+const DummyAlgorithm = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyAlgorithm.sol");
+const DummyDigest = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyDigest.sol");
 const ENSImplementation = artifacts.require("dnsregistrar/contracts/ensimplementation.sol");
 const DNSRegistrar = artifacts.require("dnsregistrar/contracts/dnsregistrar.sol");
-const sha3= require('web3').utils.sha3;
 const tld = 'xyz';
 
 contract('DNSSEC', function(accounts) {
