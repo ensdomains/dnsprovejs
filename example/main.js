@@ -36,7 +36,7 @@ function askEns(input, cb){
 
 function claim(name, proof){
   let encodedProof = '0x' + proof.rrdata.toString('hex');
-  window.dnsregistrar.claim(dns.hexEncodeName(name + '.'), encodedProof, {from:window.result.owner}, (error, r)=>{
+  window.dnsregistrar.claim(dns.hexEncodeName(name + '.'), encodedProof, {from: web3.eth.defaultAccount}, (error, r)=>{
     console.log('claimed', r);
   });
 }
@@ -45,7 +45,7 @@ function submitProof(proofs, i){
   let proof = proofs[i]
   window.oracle.knownProof(proof).then(function(r){
     if(r == '0x0000000000000000000000000000000000000000'){
-      window.oracle.submitProof(proof, proofs[i-1], {from:window.result.owner}).then(function(r){
+      window.oracle.submitProof(proof, proofs[i-1], {from: web3.eth.defaultAccount}).then(function(r){
         console.log('result', i, r);
         if(i < proofs.length - 1){
           submitProof(proofs, i+1)

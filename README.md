@@ -51,7 +51,7 @@ or you can use `prove` function to batch up the process above
 
 ```
 # The test page extracts contract info from build/contracts/*json 
-truffle migrate --network --development
+truffle migrate --network development
 npm run example
 cd example
 python -m SimpleHTTPServer 
