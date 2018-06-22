@@ -4,7 +4,7 @@
 
 - Fetches DNS information of given domain name and type
 - Checks if the DNS reponse qualify all the information to be able to add into DNSSEC Oracle
-- Submit the entry into DSNSEC Oracle.
+- Submits the entry into DSNSEC Oracle
 
 ## Usage
 
@@ -13,6 +13,7 @@ var Web3      = require('web3');
 var provider  = new Web3.providers.HttpProvider();
 var DnsProve  = require('dnsprove');
 var dnsprove  = new DnsProve(provider);
+dnsResult.found // returns true/false
 var dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
 var oracle    = await dnsprove.getOracle('0x123...');
 assert(dnsResult.found);
@@ -31,7 +32,9 @@ or you can use `prove` function to batch up the process above
 
 ```js
     let oracleAddress = '0x123...';
-    await dnsprove.prove('_ens.matoken.xyz', oracleAddress);
+    let proofs = await dnsprove.prove('_ens.matoken.xyz', oracleAddress);
+    // returns error if failed to get proofs.
+    proofs.error 
     // displays the number of unproven transactions which you can show to end users.
     proofs.unproven
     // submit all unproven proofs in a batch.
@@ -57,5 +60,10 @@ open http://localhost:8000
 
 ## TODO
 
-- Raise nice error message when an entry is not valid.
+- Raise an error message when proofs are not valid.
+- Raise an error message when failed to submit proof to oracle
 - Add unit tests
+
+## Out of scope
+
+- Claiming the domain name to `dnsregistrar` is covered by [dnsregistrar](https://github.com/ensdomains/dnsregistrar)
