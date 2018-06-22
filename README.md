@@ -14,7 +14,7 @@ var provider  = new Web3.providers.HttpProvider();
 var DnsProve  = require('dnsprove');
 var dnsprove  = new DnsProve(provider);
 var dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
-var oracle    = await dnsprove.getOracle('dnsoracle.eth');
+var oracle    = await dnsprove.getOracle('0x123...');
 assert(dnsResult.found);
 var proofs = dnsResult.proofs;
 for(i = 0; i < proofs.length; i++){
@@ -30,7 +30,8 @@ for(i = 0; i < proofs.length; i++){
 or you can use `prove` function to batch up the process above
 
 ```js
-    await dnsprove.prove('_ens.matoken.xyz', 'dnsoracle.eth');
+    let oracleAddress = '0x123...';
+    await dnsprove.prove('_ens.matoken.xyz', oracleAddress);
     // displays the number of unproven transactions which you can show to end users.
     proofs.unproven
     // submit all unproven proofs in a batch.
@@ -39,14 +40,8 @@ or you can use `prove` function to batch up the process above
 
 ## Testing
 
-Some of js libraries behaved differently depending on the environment you are in. To make sure it runs correctly, run the following commands to make sure it does not raise any errors.
-
-### Truffle
-
 ```
-# The migration will generate artifacts from node package into `build/contracts` which seems required step unlike running normal truffle test
-truffle migrate --network test
-truffle test test/integration.js --network test
+  npm run test
 ```
 
 ### Running demo
@@ -60,8 +55,8 @@ python -m SimpleHTTPServer
 open http://localhost:8000
 ```
 
-
 ## TODO
 
 - Raise nice error message when an entry does not exist.
 - Raise nice error message when an entry is not valid.
+- Add unit tests
