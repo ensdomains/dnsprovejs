@@ -110,13 +110,17 @@ document.addEventListener("DOMContentLoaded", function(event) {
     document.getElementById("lookup-output").innerHTML = window.input;
     dnsprove.lookup('_ens.' + window.input).then(function(r){
       window.result = r
-      document.getElementById("lookup-output").innerHTML = r.display().map((c)=>{
-        return c.join('\n');
-      }).join('\n');
-      askEns(window.input, (r)=>{
-        updateDOM('ens-lookup-output', r || input + ' is not found on ENS', true);
-      })
-      askOracle()
+      if(result.found){
+        document.getElementById("lookup-output").innerHTML = r.display().map((c)=>{
+          return c.join('\n');
+        }).join('\n');
+        askEns(window.input, (r)=>{
+          updateDOM('ens-lookup-output', r || input + ' is not found on ENS', true);
+        })
+        askOracle()
+      }else{
+        document.getElementById("lookup-output").innerHTML = 'the entry does not exist on DNS';
+      }
     })
   }
   document.getElementById("submit-button").onclick = function (){

@@ -1,5 +1,4 @@
-
-const sinon = require('sinon')
+const sinon = require('sinon');
 const fs = require('fs');
 const packet = require('dns-packet');
 const DnsProve  = require('../lib/dnsprover');
@@ -22,33 +21,35 @@ contract('DNSSEC', function(accounts) {
       buffer: async ()=>{
         // eg: AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA
         let fileName = input.split('=')[2];
-  
         let filePath = './test/fixtures/' + fileName + '.json';
+        let response;
         if (fs.existsSync(filePath)) {
-          let response = fs.readFileSync(filePath, 'utf8');
-          let decoded = JSON.parse(response, (k, v) => {
-            // JSON.stringify cannot serialise Buffer as is so changes it's data format
-            // to {data:{type:"Buffer", data:[1,2,1]}}.
-            // You need to transform back to Buffer
-            // such as {data: new Buffer([1,2,1]) }
-            if (
-              v !== null            &&
-              typeof v === 'object' && 
-              'type' in v           &&
-              v.type === 'Buffer'   &&
-              'data' in v           &&
-              Array.isArray(v.data)) {
-                v = new Buffer(v.data);
-            }
-            return v;
-          });
-          // Swap address with dnsregistrar owner as only the address owner can register
-          if (decoded.answers[0].name == '_ens.matoken.xyz' && decoded.answers[0].type == 'TXT'){
-            let text = `a=${owner}`
-            decoded.answers[0].data = Buffer.from(text, 'ascii')
-          }
-          return packet.encode(decoded);
+          response = fs.readFileSync(filePath, 'utf8');
+        }else{
+          response = fs.readFileSync('./test/fixtures/notfound.json', 'utf8');
         }
+        let decoded = JSON.parse(response, (k, v) => {
+          // JSON.stringify cannot serialise Buffer as is so changes it's data format
+          // to {data:{type:"Buffer", data:[1,2,1]}}.
+          // You need to transform back to Buffer
+          // such as {data: new Buffer([1,2,1]) }
+          if (
+            v !== null            &&
+            typeof v === 'object' && 
+            'type' in v           &&
+            v.type === 'Buffer'   &&
+            'data' in v           &&
+            Array.isArray(v.data)) {
+              v = new Buffer(v.data);
+          }
+          return v;
+        });
+        // Swap address with dnsregistrar owner as only the address owner can register
+        if (decoded.answers.length > 0 && decoded.answers[0].name == '_ens.matoken.xyz' && decoded.answers[0].type == 'TXT'){
+          let text = `a=${owner}`;
+          decoded.answers[0].data = Buffer.from(text, 'ascii');
+        }
+        return packet.encode(decoded);
       }
     };
   });
@@ -130,4 +131,10 @@ contract('DNSSEC', function(accounts) {
     assert.equal(proofs.total, 6)
     assert.equal(proofs.unproven, 0)
   });
+
+  it('raises error if the DNS entry does not exist', async function() {
+    const dnsprove  = new DnsProve(provider);
+    let proofs = await dnsprove.prove('example.com', address);
+    assert.equal(proofs.error, 'dns record not found');
+  })
 });

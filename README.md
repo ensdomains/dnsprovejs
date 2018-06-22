@@ -49,7 +49,7 @@ or you can use `prove` function to batch up the process above
 ```
 # The test page extracts contract info from build/contracts/*json 
 truffle migrate --network --development
-npx browserify  lib/dnsprover.js -t babelify --outfile example/dist/bundle.js 
+npm run example
 cd example
 python -m SimpleHTTPServer 
 open http://localhost:8000
@@ -57,6 +57,5 @@ open http://localhost:8000
 
 ## TODO
 
-- Raise nice error message when an entry does not exist.
 - Raise nice error message when an entry is not valid.
 - Add unit tests
