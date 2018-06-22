@@ -1,15 +1,15 @@
-// Not requiring dummy algo and digest contracts here cause the following error when running tests
-// 'Error: Could not find artifacts for dnssec-oracle/contracts/DummyAlgorithm.sol from any sources'
-var dummyalgorithm    = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyAlgorithm.sol");
-var dummydigest       = artifacts.require("@ensdomains/dnssec-oracle/contracts/DummyDigest.sol");
-var DNSSEC            = artifacts.require("@ensdomains/dnssec-oracle/contracts/DNSSEC.sol");
-var rsasha1           = artifacts.require("@ensdomains/dnssec-oracle/contracts/RSASHA1Algorithm.sol");
-var rsasha256         = artifacts.require("@ensdomains/dnssec-oracle/contracts/RSASHA256Algorithm.sol");
-var sha1              = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA1Digest.sol");
-var sha256            = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA256Digest.sol");
-var nsec3sha1         = artifacts.require("@ensdomains/dnssec-oracle/contracts/SHA1NSEC3Digest.sol");
-var ENSImplementation = artifacts.require("@ensdomains/dnsregistrar/contracts/ensimplementation.sol");
-var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/contracts/dnsregistrar.sol");
+// // Not requiring dummy algo and digest contracts here cause the following error when running tests
+// // 'Error: Could not find artifacts for dnssec-oracle/contracts/DummyAlgorithm.sol from any sources'
+var dummyalgorithm    = artifacts.require("@ensdomains/dnssec-oracle/DummyAlgorithm.sol");
+var dummydigest       = artifacts.require("@ensdomains/dnssec-oracle/DummyDigest.sol");
+var DNSSEC            = artifacts.require("@ensdomains/dnssec-oracle/DNSSEC.sol");
+var rsasha1           = artifacts.require("@ensdomains/dnssec-oracle/RSASHA1Algorithm.sol");
+var rsasha256         = artifacts.require("@ensdomains/dnssec-oracle/RSASHA256Algorithm.sol");
+var sha1              = artifacts.require("@ensdomains/dnssec-oracle/SHA1Digest.sol");
+var sha256            = artifacts.require("@ensdomains/dnssec-oracle/SHA256Digest.sol");
+var nsec3sha1         = artifacts.require("@ensdomains/dnssec-oracle/SHA1NSEC3Digest.sol");
+var ENSImplementation = artifacts.require("@ensdomains/dnsregistrar/ensimplementation.sol");
+var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/dnsregistrar.sol");
 var dns      = require("@ensdomains/dnssec-oracle/lib/dns.js");
 var namehash = require('eth-ens-namehash');
 var sha3     = require('web3').utils.sha3;
@@ -17,7 +17,6 @@ var tld = "xyz";
 let ens, algorithm, digest;
 
 module.exports = function(deployer, network) {
-  var test = (network == "test");
   var anchors = dns.anchors;
   return deployer.deploy(DNSSEC, dns.encodeAnchors(anchors))
     .then(() => deployer.deploy([[ENSImplementation], [rsasha256], [rsasha1], [sha256], [sha1], [nsec3sha1]]))
