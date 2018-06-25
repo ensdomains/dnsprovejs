@@ -5,6 +5,7 @@
 - Fetches DNS information of given domain name and type
 - Validates DNS reponse and constructs proofs
 - Submits the proofs into DSNSEC Oracle smart contract
+- Works from both browser and from node.js
 
 ## Installing
 
