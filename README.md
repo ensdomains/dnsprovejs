@@ -23,7 +23,7 @@ for(i = 0; i < proofs.length; i++){
   // proof.rrsig
   // proof.signature
   if(!await oracle.knownProof(proof)){
-    await oracle.submitProof(proof)
+    await oracle.submitProof(proof, proofs[i-1], {from:address})
   }
 }
 ```
@@ -38,7 +38,7 @@ or you can use `prove` function to batch up the process above
     // displays the number of unproven transactions which you can show to end users.
     proofs.unproven
     // submit all unproven proofs in a batch.
-    await proofs.submit();
+    await proofs.submit({from:address});
 ```
 
 ## Testing
