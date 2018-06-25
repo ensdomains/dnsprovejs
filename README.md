@@ -3,8 +3,14 @@
 ## Functionalities
 
 - Fetches DNS information of given domain name and type
-- Checks if the DNS reponse qualify all the information to be able to add into DNSSEC Oracle
-- Submits the entry into DSNSEC Oracle
+- Validates DNS reponse and constructs proofs
+- Submits the proofs into DSNSEC Oracle smart contract
+
+## Installing
+
+```
+npm install '@ensdomains/dnsprovejs' --save
+```
 
 ## Usage
 
@@ -63,7 +69,4 @@ open http://localhost:8000
 - Raise an error message when proofs are not valid.
 - Raise an error message when failed to submit proof to oracle
 - Add unit tests
-
-## Out of scope
-
-- Claiming the domain name to `dnsregistrar` is covered by [dnsregistrar](https://github.com/ensdomains/dnsregistrar)
+- Support for `submitRRSets`
