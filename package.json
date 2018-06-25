@@ -4,7 +4,6 @@
   "description": "Port of dnsprove.go",
   "main": "lib/dnsprover.js",
   "scripts": {
-    "watch": "jest --watch",
     "test": "truffle migrate && truffle test test/integration.js",
     "example": "browserify example/main.js -t babelify --outfile example/dist/bundle.js",
     "prepublishOnly": "truffle compile && truffle networks --clean"
@@ -19,17 +18,16 @@
     "es6-promise": "^4.2.4",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "sinon": "^5.0.7"
+    "eth-ens-namehash": "^2.0.8",
+    "web3": "^1.0.0-beta.34"
   },
   "devDependencies": {
+    "sinon": "^5.0.7",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
     "browserify": "^16.2.2",
-    "eth-ens-namehash": "^2.0.8",
-    "jest": "^23.0.1",
     "mocha": "^5.2.0",
-    "truffle": "^4.1.12",
-    "web3": "^1.0.0-beta.34"
+    "truffle": "^4.1.12"
   }
 }
