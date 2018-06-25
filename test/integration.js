@@ -14,6 +14,7 @@ const tld = 'xyz';
 
 contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
+  const nonOwner = accounts[1];
   const provider = web3.currentProvider;
   
   let stub = sinon.stub(global, 'fetch').callsFake(function(input) {
@@ -122,11 +123,11 @@ contract('DNSSEC', function(accounts) {
     assert.equal(proofs.unproven, 6);
     assert.equal(proofs.owner, owner);
     assert.equal(proofs.lastProof, '0x' + proofs.proofs[5].rrdata.toString('hex'));
-    await proofs.submit(0); // only the first entry;
+    await proofs.submitOne(0, {from:nonOwner}); // only the first entry;
     proofs = await dnsprove.prove('_ens.matoken.xyz', address);
     assert.equal(proofs.total, 6)
     assert.equal(proofs.unproven, 5)
-    await proofs.submit(); // submit all entries
+    await proofs.submit({from:nonOwner}); // submit all entries
     proofs = await dnsprove.prove('_ens.matoken.xyz', address);
     assert.equal(proofs.total, 6)
     assert.equal(proofs.unproven, 0)
