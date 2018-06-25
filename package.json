@@ -1,5 +1,5 @@
 {
-  "name": "dnsprovejs",
+  "name": "@ensdomains/dnsprovejs",
   "version": "0.0.1",
   "description": "Port of dnsprove.go",
   "main": "lib/dnsprover.js",
