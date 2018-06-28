@@ -4,7 +4,11 @@ const DNSSEC = require("../build/contracts/DNSSEC.json");
 const ENSImplementation = require("../build/contracts/ensimplementation.json");
 const DNSRegistrar = require("../build/contracts/dnsregistrar.json");
 const Web3      = require('web3');
-const dns = require("@ensdomains/dnssec-oracle/lib/dns.js");
+const packet = require('dns-packet');
+
+function hexEncodeName(name){
+  return '0x' + packet.name.encode(name).toString('hex');
+}
 
 function updateDOM(element, message, override){
   if(override){
@@ -36,7 +40,7 @@ function askEns(input, cb){
 
 function claim(name, proof){
   let encodedProof = '0x' + proof.rrdata.toString('hex');
-  window.dnsregistrar.claim(dns.hexEncodeName(name + '.'), encodedProof, {from: web3.eth.defaultAccount}, (error, r)=>{
+  window.dnsregistrar.claim(hexEncodeName(name + '.'), encodedProof, {from: web3.eth.defaultAccount}, (error, r)=>{
     console.log('claimed', r);
   });
 }
