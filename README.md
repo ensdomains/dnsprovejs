@@ -4,7 +4,7 @@
 
 - Fetches DNS information of given domain name and type
 - Validates DNS reponses and constructs proofs
-- Submits the proofs into DNSSEC Oracle smart contract
+- Submits the proofs into DNSSEC(Domain Name System Security Extensions) Oracle smart contract
 - Works from both browser and from node.js
 
 ## Installing
@@ -13,7 +13,7 @@
 npm install '@ensdomains/dnsprovejs' --save
 ```
 
-## Usage
+## Usage
 
 ```js
 var provider  = web3.currentProvider;
@@ -40,6 +40,35 @@ or you can use `prove` function to batch up the process above
     await proofs.submit({from:address});
 ```
 
+## API
+
+### `DnsProve`
+
+- `lookup(type, name)` takes DNS record type (currently only `TXT` is supported) and name (prefixed with `_ens.`). It returns `DnsResult` object.
+- `getOracle(address)` returns DNSSEC oracle(`Oracle`) object.
+- `prove(name)` looks up DNS record, checks which proofs are already subitted in DNSSEC oracle, then returns `OracleProver` object. 
+
+### `DnsResult`
+
+- `found` is a proparty containing `true` if the given DNS record is found.
+- `proofs` is an array of proofs which can be submitted to `Oracle` contract.
+
+### `Oracle`
+
+`Oracle` is a wrapper object of `DNSSEC.sol` Oracle smart contract.
+
+- `known(proof)` returns true if the given proof already exists in `Oracle`.
+- `submitProof(proof, prefProof, params)` submits a proof to Oracle contract. If `prefProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
+
+### `OracleProver`
+
+- `proofs` is an array of all proofs associated with the DNS entry
+- `total` is total number of `proofs`
+- `unproven` = number of proofs yet to be submitted int DNSSEC Oracle
+- `owner` is an address which is in embedded `_ens.domain.tld`. This owner will be the owner of the given domain name regardless of who submit the proof into DNSSEC Oracle.
+- `submit()` sends all unproven proofs into DNSSEC Oracle.
+- `submit(index)` sends a single proof (specified by index of `proofs` array) into DNSSEC Oracle. Mostly used for testing purpose.
+
 ## Testing
 
 ```
@@ -51,6 +80,7 @@ or you can use `prove` function to batch up the process above
 ```
 # The test page extracts contract info from build/contracts/*.json 
 truffle migrate --network development
+# compile example/main.js into example/dist/bundle.js
 npm run example
 cd example
 python -m SimpleHTTPServer 
