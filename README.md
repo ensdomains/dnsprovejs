@@ -35,7 +35,7 @@ for(i = 0; i < proofs.length; i++){
 Or you can submit all in one shot.
 
 ```js
-  let dnsResult = await dnsprove.lookup('_ens.matoken.xyz', address);
+  let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
   let oracle    = await dnsprove.getOracle(address);
   await oracle.submit(dnsResult, {from:nonOwner});
 ```

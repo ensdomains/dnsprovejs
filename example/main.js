@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
     document.getElementById("lookup-output").innerHTML = '';
     window.input = document.getElementById("lookup-input").value;
     document.getElementById("lookup-output").innerHTML = window.input;
-    dnsprove.lookup('_ens.' + window.input).then(function(r){
+    dnsprove.lookup('TXT', '_ens.' + window.input).then(function(r){
       window.result = r
       if(result.found){
         document.getElementById("lookup-output").innerHTML = r.display().map((c)=>{

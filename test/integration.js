@@ -88,7 +88,7 @@ contract('DNSSEC', function(accounts) {
   it('lookup should accept mocked DNSSEC records', async function() {
     // Step 1. Look up dns entry
     const dnsprove  = new DnsProve(provider);
-    const dnsResult = await dnsprove.lookup('_ens.matoken.xyz');
+    const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
     const oracle    = await dnsprove.getOracle(address);
     // Step 2. Checks that the result is found and is valid.
     assert.equal(dnsResult.found, true);
@@ -118,7 +118,7 @@ contract('DNSSEC', function(accounts) {
 
   it('prove should return transactions which need proving', async function() {
     const dnsprove  = new DnsProve(provider);
-    let dnsResult = await dnsprove.lookup('_ens.matoken.xyz', address);
+    let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle    = await dnsprove.getOracle(address);
     let prover    = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
@@ -138,7 +138,7 @@ contract('DNSSEC', function(accounts) {
 
   it('raises error if the DNS entry does not exist', async function() {
     const dnsprove  = new DnsProve(provider);
-    let dnsResult = await dnsprove.lookup('example.com', address);
+    let dnsResult = await dnsprove.lookup('TXT', 'example.com', address);
     assert.equal(dnsResult.found, false);
   })
 });
