@@ -32,12 +32,12 @@ for(i = 0; i < proofs.length; i++){
 }
 ```
 
-or you can use `prove` function to batch up the process above
+Or you can submit all in one shot.
 
 ```js
-    let oracleAddress = '0x123...';
-    let proofs = await dnsprove.prove('_ens.matoken.xyz', oracleAddress);
-    await proofs.submit({from:address});
+  let dnsResult = await dnsprove.lookup('_ens.matoken.xyz', address);
+  let oracle    = await dnsprove.getOracle(address);
+  await oracle.submit(dnsResult, {from:nonOwner});
 ```
 
 ## API

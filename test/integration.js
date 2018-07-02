@@ -118,24 +118,27 @@ contract('DNSSEC', function(accounts) {
 
   it('prove should return transactions which need proving', async function() {
     const dnsprove  = new DnsProve(provider);
-    let proofs = await dnsprove.prove('_ens.matoken.xyz', address);
-    assert.equal(proofs.total, 6);
-    assert.equal(proofs.unproven, 6);
-    assert.equal(proofs.owner, owner);
-    assert.equal(proofs.lastProof, '0x' + proofs.proofs[5].rrdata.toString('hex'));
-    await proofs.submitOne(0, {from:nonOwner}); // only the first entry;
-    proofs = await dnsprove.prove('_ens.matoken.xyz', address);
-    assert.equal(proofs.total, 6)
-    assert.equal(proofs.unproven, 5)
-    await proofs.submit({from:nonOwner}); // submit all entries
-    proofs = await dnsprove.prove('_ens.matoken.xyz', address);
-    assert.equal(proofs.total, 6)
-    assert.equal(proofs.unproven, 0)
+    let dnsResult = await dnsprove.lookup('_ens.matoken.xyz', address);
+    let oracle    = await dnsprove.getOracle(address);
+    let prover    = await oracle.getProver(dnsResult);
+    assert.equal(prover.total, 6);
+    assert.equal(prover.unproven, 6);
+    assert.equal(prover.owner, owner);
+    assert.equal(prover.lastProof, '0x' + prover.proofs[5].rrdata.toString('hex'));
+    await oracle.submitProof(prover.proofs[0], null, {from:nonOwner});
+    prover    = await oracle.getProver(dnsResult);
+    assert.equal(prover.total, 6)
+    assert.equal(prover.unproven, 5)
+
+    await oracle.submit(dnsResult, {from:nonOwner});
+    prover    = await oracle.getProver(dnsResult);
+    assert.equal(prover.total, 6)
+    assert.equal(prover.unproven, 0)
   });
 
   it('raises error if the DNS entry does not exist', async function() {
     const dnsprove  = new DnsProve(provider);
-    let proofs = await dnsprove.prove('example.com', address);
-    assert.equal(proofs.error, 'dns record not found');
+    let dnsResult = await dnsprove.lookup('example.com', address);
+    assert.equal(dnsResult.found, false);
   })
 });
