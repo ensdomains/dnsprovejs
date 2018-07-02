@@ -12,6 +12,10 @@ const ENSImplementation = artifacts.require("@ensdomains/dnsregistrar/ENSImpleme
 const DNSRegistrar = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar.sol");
 const tld = 'xyz';
 
+function hexEncodeName(name){
+  return '0x' + packet.name.encode(name).toString('hex');
+}
+
 contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
   const nonOwner = accounts[1];
@@ -66,11 +70,11 @@ contract('DNSSEC', function(accounts) {
     address =  dnssec.address;
 
     assert.equal(await dnssec.anchors.call(), dns.encodeAnchors(anchors));
-    registrar = await DNSRegistrar.new(dnssec.address, ens.address, dns.hexEncodeName(tld + "."), namehash.hash(tld));
+    registrar = await DNSRegistrar.new(dnssec.address, ens.address, hexEncodeName(tld), namehash.hash(tld));
 
     assert.equal(await registrar.oracle.call(), dnssec.address);
     assert.equal(await registrar.ens.call(), ens.address);
-    assert.equal(await registrar.rootDomain.call(), dns.hexEncodeName(tld + "."));
+    assert.equal(await registrar.rootDomain.call(), hexEncodeName(tld));
     assert.equal(await registrar.rootNode.call(), namehash.hash(tld));
 
     await ens.setSubnodeOwner(0, sha3(tld), registrar.address);
@@ -108,7 +112,7 @@ contract('DNSSEC', function(accounts) {
     }
     // Step 4. Use the last rrdata as a proof to claim the ownership
     var proof =  '0x' + proofs[proofs.length -1].rrdata.toString('hex');
-    let name = dns.hexEncodeName("matoken.xyz.");
+    let name = hexEncodeName("matoken.xyz");
     let tx = await registrar.claim(name, proof, {from:owner});
     assert.equal(parseInt(tx.receipt.status), 1);
     // Step 5. Confirm that the domain is owned by thw DNS record owner.
