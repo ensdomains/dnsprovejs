@@ -92,7 +92,7 @@ contract('DNSSEC', function(accounts) {
     const oracle    = await dnsprove.getOracle(address);
     // Step 2. Checks that the result is found and is valid.
     assert.equal(dnsResult.found, true);
-    assert.equal(dnsResult.owner, owner);
+    assert.equal(dnsResult.results[5].rrs[0].data.toString().split('=')[1], owner);
     assert.equal(dnsResult.proofs.length, 6);
     assert.equal(dnsResult.proofs[0].name, '.');
     // Step 3. Submit each proof to DNSSEC oracle
@@ -123,7 +123,6 @@ contract('DNSSEC', function(accounts) {
     let prover    = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 6);
-    assert.equal(prover.owner, owner);
     assert.equal(prover.lastProof, '0x' + prover.proofs[5].rrdata.toString('hex'));
     await oracle.submitProof(prover.proofs[0], null, {from:nonOwner});
     prover    = await oracle.getProver(dnsResult);

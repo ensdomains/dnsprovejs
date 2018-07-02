@@ -46,7 +46,6 @@ Or you can submit all in one shot.
 
 - `lookup(type, name)` takes DNS record type (currently only `TXT` is supported) and name. It returns `DnsResult` object.
 - `getOracle(address)` returns DNSSEC oracle(`Oracle`) object.
-- `prove(name)` looks up DNS record, checks which proofs are already subitted in DNSSEC oracle, then returns `OracleProver` object. 
 
 ### `DnsResult`
 
@@ -58,16 +57,8 @@ Or you can submit all in one shot.
 `Oracle` is a wrapper object of `DNSSEC.sol` Oracle smart contract.
 
 - `known(proof)` returns true if the given proof already exists in `Oracle`.
-- `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
-
-### `OracleProver`
-
-- `proofs` is an array of all proofs associated with the DNS entry
-- `total` is total number of `proofs`
-- `unproven` = number of proofs yet to be submitted int DNSSEC Oracle
-- `owner` is an address which is in embedded `_ens.domain.tld`. This owner will be the owner of the given domain name regardless of who submit the proof into DNSSEC Oracle.
 - `submit()` sends all unproven proofs into DNSSEC Oracle.
-- `submit(index)` sends a single proof (specified by index of `proofs` array) into DNSSEC Oracle. Mostly used for testing purpose.
+- `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
 
 ## Testing
 

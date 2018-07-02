@@ -27,7 +27,8 @@ function askOracle(){
       updateDOM('oracle-output', proof.name + '\t' + proof.type + '\t' + r)
     });
   })
-  updateDOM('oracle-output', 'The address is owned by ' +  window.result.owner)
+  let owner = window.result.results[5].rrs[0].data.toString().split('=')[1], owner);
+  updateDOM('oracle-output', 'The address is owned by ' +  owner)
 }
 
 function askEns(input, cb){
