@@ -1,112 +1,106 @@
 {
-    "id": 1,
-    "type": "response",
-    "flags": 416,
-    "flag_qr": true,
-    "opcode": "QUERY",
-    "flag_aa": false,
-    "flag_tc": false,
-    "flag_rd": true,
-    "flag_ra": true,
-    "flag_z": false,
-    "flag_ad": true,
-    "flag_cd": false,
-    "rcode": "NOERROR",
-    "questions": [
-        {
-            "name": ".",
-            "type": "DS",
-            "class": "IN"
+  "id": 1,
+  "type": "response",
+  "flags": 416,
+  "flag_qr": true,
+  "opcode": "QUERY",
+  "flag_aa": false,
+  "flag_tc": false,
+  "flag_rd": true,
+  "flag_ra": true,
+  "flag_z": false,
+  "flag_ad": true,
+  "flag_cd": false,
+  "rcode": "NOERROR",
+  "questions": [
+    {
+      "name": ".",
+      "type": "DS",
+      "class": "IN"
+    }
+  ],
+  "answers": [],
+  "authorities": [
+    {
+      "name": ".",
+      "type": "SOA",
+      "ttl": 35397,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "mname": "a.root-servers.net",
+        "rname": "nstld.verisign-grs.com",
+        "serial": 2018052202,
+        "refresh": 1800,
+        "retry": 900,
+        "expire": 604800,
+        "minimum": 86400
+      }
+    },
+    {
+      "name": ".",
+      "type": "RRSIG",
+      "ttl": 35397,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "typeCovered": "SOA",
+        "algorithm": 253,
+        "labels": 0,
+        "originalTTL": 86400,
+        "expiration": 2528174800,
+        "inception": 1527012000,
+        "keyTag": 1277,
+        "signersName": ".",
+        "signature": {
+          "type": "Buffer",
+          "data": []
         }
-    ],
-    "answers": [],
-    "authorities": [
-        {
-            "name": ".",
-            "type": "SOA",
-            "ttl": 35397,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "mname": "a.root-servers.net",
-                "rname": "nstld.verisign-grs.com",
-                "serial": 2018052202,
-                "refresh": 1800,
-                "retry": 900,
-                "expire": 604800,
-                "minimum": 86400
-            }
-        },
-        {
-            "name": ".",
-            "type": "RRSIG",
-            "ttl": 35397,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "typeCovered": "SOA",
-                "algorithm": 253,
-                "labels": 0,
-                "originalTTL": 86400,
-                "expiration": 2528174800,
-                "inception": 1527012000,
-                "keyTag": 1277,
-                "signersName": ".",
-                "signature": {
-                    "type": "Buffer",
-                    "data": []
-                }
-            }
-        },
-        {
-            "name": ".",
-            "type": "NSEC",
-            "ttl": 35397,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "nextDomain": "aaa",
-                "rrtypes": [
-                    "NS",
-                    "SOA",
-                    "RRSIG",
-                    "NSEC",
-                    "DNSKEY"
-                ]
-            }
-        },
-        {
-            "name": ".",
-            "type": "RRSIG",
-            "ttl": 35397,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "typeCovered": "NSEC",
-                "algorithm": 8,
-                "labels": 0,
-                "originalTTL": 86400,
-                "expiration": 2528174800,
-                "inception": 1527012000,
-                "keyTag": 1277,
-                "signersName": ".",
-                "signature": {
-                    "type": "Buffer",
-                    "data": []
-                }
-            }
+      }
+    },
+    {
+      "name": ".",
+      "type": "NSEC",
+      "ttl": 35397,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "nextDomain": "aaa",
+        "rrtypes": ["NS", "SOA", "RRSIG", "NSEC", "DNSKEY"]
+      }
+    },
+    {
+      "name": ".",
+      "type": "RRSIG",
+      "ttl": 35397,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "typeCovered": "NSEC",
+        "algorithm": 8,
+        "labels": 0,
+        "originalTTL": 86400,
+        "expiration": 2528174800,
+        "inception": 1527012000,
+        "keyTag": 1277,
+        "signersName": ".",
+        "signature": {
+          "type": "Buffer",
+          "data": []
         }
-    ],
-    "additionals": [
-        {
-            "name": ".",
-            "type": "OPT",
-            "udpPayloadSize": 512,
-            "extendedRcode": 0,
-            "ednsVersion": 0,
-            "flags": 32768,
-            "flag_do": true,
-            "options": []
-        }
-    ]
+      }
+    }
+  ],
+  "additionals": [
+    {
+      "name": ".",
+      "type": "OPT",
+      "udpPayloadSize": 512,
+      "extendedRcode": 0,
+      "ednsVersion": 0,
+      "flags": 32768,
+      "flag_do": true,
+      "options": []
+    }
+  ]
 }

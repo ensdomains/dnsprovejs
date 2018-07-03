@@ -1,88 +1,88 @@
 {
-    "id": 1,
-    "type": "response",
-    "flags": 416,
-    "flag_qr": true,
-    "opcode": "QUERY",
-    "flag_aa": false,
-    "flag_tc": false,
-    "flag_rd": true,
-    "flag_ra": true,
-    "flag_z": false,
-    "flag_ad": true,
-    "flag_cd": false,
-    "rcode": "NOERROR",
-    "questions": [
-        {
-            "name": ".",
-            "type": "DNSKEY",
-            "class": "IN"
+  "id": 1,
+  "type": "response",
+  "flags": 416,
+  "flag_qr": true,
+  "opcode": "QUERY",
+  "flag_aa": false,
+  "flag_tc": false,
+  "flag_rd": true,
+  "flag_ra": true,
+  "flag_z": false,
+  "flag_ad": true,
+  "flag_cd": false,
+  "rcode": "NOERROR",
+  "questions": [
+    {
+      "name": ".",
+      "type": "DNSKEY",
+      "class": "IN"
+    }
+  ],
+  "answers": [
+    {
+      "name": ".",
+      "type": "DNSKEY",
+      "ttl": 26450,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "flags": 256,
+        "algorithm": 253,
+        "key": {
+          "type": "Buffer",
+          "data": []
         }
-    ],
-    "answers": [
-        {
-            "name": ".",
-            "type": "DNSKEY",
-            "ttl": 26450,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "flags": 256,
-                "algorithm": 253,
-                "key": {
-                    "type": "Buffer",
-                    "data": []
-                }
-            }
-        },
-        {
-            "name": ".",
-            "type": "DNSKEY",
-            "ttl": 26450,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "flags": 257,
-                "algorithm": 253,
-                "key": {
-                    "type": "Buffer",
-                    "data": [17, 17]
-                }
-            }
-        },
-        {
-            "name": ".",
-            "type": "RRSIG",
-            "ttl": 26450,
-            "class": "IN",
-            "flush": false,
-            "data": {
-                "typeCovered": "DNSKEY",
-                "algorithm": 253,
-                "labels": 0,
-                "originalTTL": 172800,
-                "expiration": 2528174800,
-                "inception": 1526860800,
-                "keyTag": 5647,
-                "signersName": ".",
-                "signature": {
-                    "type": "Buffer",
-                    "data": []
-                }
-            }
+      }
+    },
+    {
+      "name": ".",
+      "type": "DNSKEY",
+      "ttl": 26450,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "flags": 257,
+        "algorithm": 253,
+        "key": {
+          "type": "Buffer",
+          "data": [17, 17]
         }
-    ],
-    "authorities": [],
-    "additionals": [
-        {
-            "name": ".",
-            "type": "OPT",
-            "udpPayloadSize": 512,
-            "extendedRcode": 0,
-            "ednsVersion": 0,
-            "flags": 32768,
-            "flag_do": true,
-            "options": []
+      }
+    },
+    {
+      "name": ".",
+      "type": "RRSIG",
+      "ttl": 26450,
+      "class": "IN",
+      "flush": false,
+      "data": {
+        "typeCovered": "DNSKEY",
+        "algorithm": 253,
+        "labels": 0,
+        "originalTTL": 172800,
+        "expiration": 2528174800,
+        "inception": 1526860800,
+        "keyTag": 5647,
+        "signersName": ".",
+        "signature": {
+          "type": "Buffer",
+          "data": []
         }
-    ]
+      }
+    }
+  ],
+  "authorities": [],
+  "additionals": [
+    {
+      "name": ".",
+      "type": "OPT",
+      "udpPayloadSize": 512,
+      "extendedRcode": 0,
+      "ednsVersion": 0,
+      "flags": 32768,
+      "flag_do": true,
+      "options": []
+    }
+  ]
 }
