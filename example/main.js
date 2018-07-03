@@ -22,13 +22,14 @@ function updateDOM(element, message, override) {
 function askOracle() {
   document.getElementById('oracle-output').innerHTML = '';
   let proofs = window.result.proofs;
+
   proofs.forEach(function(proof) {
     let rrdata;
     window.oracle.knownProof(proof).then(function(r) {
       updateDOM('oracle-output', proof.name + '\t' + proof.type + '\t' + r);
     });
   });
-  let lastResult = window.result.results.length - 1;
+  let lastResult = window.result.results[window.result.results.length - 1];
   let owner = lastResult.rrs[0].data.toString().split('=')[1];
   updateDOM('oracle-output', 'The address is owned by ' + owner);
 }
@@ -49,46 +50,6 @@ function claim(name, proof) {
       console.log('claimed', r);
     }
   );
-}
-
-function submitProof(proofs, i) {
-  let proof = proofs[i];
-  window.oracle.knownProof(proof).then(function(r) {
-    if (r == '0x0000000000000000000000000000000000000000') {
-      window.oracle
-        .submitProof(proof, proofs[i - 1], { from: web3.eth.defaultAccount })
-        .then(function(r) {
-          console.log('result', i, r);
-          if (i < proofs.length - 1) {
-            submitProof(proofs, i + 1);
-          } else {
-            askEns(window.input, r => {
-              if (r == '0x0000000000000000000000000000000000000000') {
-                claim(window.input, proof);
-              }
-            });
-            updateDOM(
-              'oracle-output',
-              'Click Lookup button to check the latest state'
-            );
-          }
-        });
-    } else {
-      if (i < proofs.length - 1) {
-        submitProof(proofs, i + 1);
-      } else {
-        askEns(window.input, r => {
-          if (r == '0x0000000000000000000000000000000000000000') {
-            claim(window.input, proof);
-          }
-        });
-        updateDOM(
-          'oracle-output',
-          'Click Lookup button to check the latest state'
-        );
-      }
-    }
-  });
 }
 
 document.addEventListener('DOMContentLoaded', function(event) {
@@ -160,7 +121,8 @@ document.addEventListener('DOMContentLoaded', function(event) {
     if (!window.result) {
       updateDOM('oracle-output', 'Please lookup DNS first');
       return false;
+    } else {
+      window.oracle.submit(window.result, { from: web3.eth.defaultAccount });
     }
-    submitProof(window.result.proofs, 0);
   };
 });

@@ -44,12 +44,13 @@ Or you can submit all in one shot.
 
 ### `DnsProve`
 
-- `lookup(type, name)` takes DNS record type (currently only `TXT` is supported) and name. It returns `DnsResult` object.
+- `lookup(type, name)` takes DNS record type and name. It returns `DnsResult` object.
 - `getOracle(address)` returns DNSSEC oracle(`Oracle`) object.
 
 ### `DnsResult`
 
 - `found` is a proparty containing `true` if the given DNS record is found.
+- `results` is an array of DNS records.
 - `proofs` is an array of proofs which can be submitted to `Oracle` contract.
 
 ### `Oracle`
