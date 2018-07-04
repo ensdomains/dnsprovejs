@@ -107,7 +107,7 @@ contract('DNSSEC', function(accounts) {
     assert.equal(await dnssec.digests.call(253), dummyDigest.address);
   });
 
-  it('lookup should accept mocked DNSSEC records', async function() {
+  it('submitProof submit a proof', async function() {
     // Step 1. Look up dns entry
     const dnsprove = new DnsProve(provider);
     const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
@@ -141,7 +141,7 @@ contract('DNSSEC', function(accounts) {
     assert.equal(result, owner);
   });
 
-  it('prove should return transactions which need proving', async function() {
+  it('submit submits proofs one at a time', async function() {
     const dnsprove = new DnsProve(provider);
     let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle = await dnsprove.getOracle(address);
@@ -156,11 +156,27 @@ contract('DNSSEC', function(accounts) {
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 5);
-
-    await oracle.submit(dnsResult, { from: nonOwner });
+    await oracle.submit(dnsResult, { from: nonOwner, gas:6000000 });
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 0);
+  });
+
+  it.only('submitOnce submits all proofs at once', async function() {
+    const dnsprove = new DnsProve(provider);
+    let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
+    let oracle = await dnsprove.getOracle(address);
+    let prover = await oracle.getProver(dnsResult);
+    // assert.equal(prover.total, 6);
+    // assert.equal(prover.unproven, 6);
+    // await oracle.submitProof(prover.proofs[0], null, { from: nonOwner });
+    // prover = await oracle.getProver(dnsResult);
+    // assert.equal(prover.total, 6);
+    // assert.equal(prover.unproven, 5);
+    await oracle.submitOnce(dnsResult, { from: nonOwner, gas:6000000 });
+    prover = await oracle.getProver(dnsResult);
+    assert.equal(prover.total, 6);
+    assert.equal(prover.unproven, 0);  
   });
 
   it('raises error if the DNS entry does not exist', async function() {
