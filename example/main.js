@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
       updateDOM('oracle-output', 'Please lookup DNS first');
       return false;
     } else {
-      window.oracle.submit(window.result, { from: web3.eth.defaultAccount });
+      window.oracle.submitOnce(window.result, { from: web3.eth.defaultAccount });
     }
   };
 });
