@@ -32,12 +32,12 @@ for(i = 0; i < proofs.length; i++){
 }
 ```
 
-Or you can submit all in one shot.
+Or you can submit all in one transaction.
 
 ```js
   let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
   let oracle    = await dnsprove.getOracle(address);
-  await oracle.submitEach(dnsResult, {from:nonOwner});
+  await oracle.submitAll(dnsResult, {from:nonOwner});
 ```
 
 ## API
@@ -52,12 +52,13 @@ Or you can submit all in one shot.
 - `found` is a proparty containing `true` if the given DNS record is found.
 - `results` is an array of DNS records.
 - `proofs` is an array of proofs which can be submitted to `Oracle` contract.
+- `lastProof` is a hex representation of the last resource record data (aka rrdata)
 
 ### `Oracle`
 
 `Oracle` is a wrapper object of `DNSSEC.sol` Oracle smart contract.
 
-- `known(proof)` returns true if the given proof already exists in `Oracle`.
+- `knownProof(proof)` returns true if the given proof already exists in `Oracle`.
 - `submitAll(dnsresult, params)` sends all unproven proofs into DNSSEC Oracle as one transaction in a batch.
 - `submitEach(dnsresult, params)` sends all unproven proofs into DNSSEC Oracle one transaction per proof.
 - `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
@@ -85,4 +86,3 @@ open http://localhost:8000
 - Raise an error message when proofs are not valid.
 - Raise an error message when failed to submit proof to oracle
 - Add unit tests
-- Support for `submitRRSets`

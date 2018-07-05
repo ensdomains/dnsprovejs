@@ -143,40 +143,28 @@ contract('DNSSEC', function(accounts) {
 
   it('submit submits proofs one at a time', async function() {
     const dnsprove = new DnsProve(provider);
-    let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
+    let result = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle = await dnsprove.getOracle(address);
-    let prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 6);
+    assert.equal((await oracle.getProven(result)), 0);
     assert.equal(
-      prover.lastProof,
-      '0x' + prover.proofs[5].rrdata.toString('hex')
+      result.lastProof,
+      '0x' + result.proofs[5].rrdata.toString('hex')
     );
-    await oracle.submitProof(prover.proofs[0], null, { from: nonOwner, gas:gas });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 5);
-    await oracle.submitEach(dnsResult, { from: nonOwner, gas:gas });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 0);
+    await oracle.submitProof(result.proofs[0], null, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), 1);
+    await oracle.submitEach(result, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), result.proofs.length);
   });
 
   it('submitAll submits all proofs at once', async function() {
     const dnsprove = new DnsProve(provider);
-    let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
+    let result = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle = await dnsprove.getOracle(address);
-    let prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 6);
-    await oracle.submitProof(prover.proofs[0], null, { from: nonOwner, gas:gas });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 5);
-    await oracle.submitAll(dnsResult, { from: nonOwner, gas:gas });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 0);  
+    assert.equal((await oracle.getProven(result)), 0);
+    await oracle.submitProof(result.proofs[0], null, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), 1);
+    await oracle.submitAll(result, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), result.proofs.length);
   });
 
   it('raises error if the DNS entry does not exist', async function() {
