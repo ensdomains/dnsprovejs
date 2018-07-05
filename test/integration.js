@@ -156,13 +156,13 @@ contract('DNSSEC', function(accounts) {
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 5);
-    await oracle.submit(dnsResult, { from: nonOwner, gas:gas });
+    await oracle.submitEach(dnsResult, { from: nonOwner, gas:gas });
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 0);
   });
 
-  it('submitOnce submits all proofs at once', async function() {
+  it('submitAll submits all proofs at once', async function() {
     const dnsprove = new DnsProve(provider);
     let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle = await dnsprove.getOracle(address);
@@ -173,7 +173,7 @@ contract('DNSSEC', function(accounts) {
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 5);
-    await oracle.submitOnce(dnsResult, { from: nonOwner, gas:gas });
+    await oracle.submitAll(dnsResult, { from: nonOwner, gas:gas });
     prover = await oracle.getProver(dnsResult);
     assert.equal(prover.total, 6);
     assert.equal(prover.unproven, 0);  
