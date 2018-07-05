@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <style>
+        #lookup-output{
+            width:100%;
+            overflow: scroll;
+        }
+    </style>
+    <body>
+        <div id="container"></div>
+        <script src="dist/bundle.js"></script>
+        <input type="text" placeholder="eg: matoken.xyz" id="lookup-input">
+        <button id="lookup-button">LookUp</button>
+        <div>
+            <h2>DNS Lookup result</h2>
+            <pre  id="lookup-output">
+            </pre>
+            <h2>DNS Oracle Lookup result</h2>
+            <pre  id="oracle-output">
+            </pre>
+            <button id="submit-button">Submit proofs</button>
+        </div>
+        <div>
+            <h2>ENS lookup result</h2>
+            <div id="ens-lookup-output">
+
+            </div>              
+        </div>
+    </body>
+</html>
