@@ -59,8 +59,7 @@ Or you can submit all in one transaction.
 `Oracle` is a wrapper object of `DNSSEC.sol` Oracle smart contract.
 
 - `knownProof(proof)` returns true if the given proof already exists in `Oracle`.
-- `submitAll(dnsresult, params)` sends all unproven proofs into DNSSEC Oracle as one transaction in a batch.
-- `submitEach(dnsresult, params)` sends all unproven proofs into DNSSEC Oracle one transaction per proof.
+- `submit(dnsresult, params)` sends all unproven proofs into DNSSEC Oracle as one transaction in a batch.
 - `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
 
 ## Testing
