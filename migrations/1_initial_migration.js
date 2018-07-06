@@ -1,6 +1,3 @@
-// var Migrations = artifacts.require("./dnssec-oracle/contracts/Migrations.sol");
-var Migrations = artifacts.require("./Migrations.sol");
-
+// Need this file so that migration works.
 module.exports = function(deployer) {
-  deployer.deploy(Migrations);
 };

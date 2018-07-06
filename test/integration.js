@@ -19,7 +19,7 @@ const DNSRegistrar = artifacts.require(
   '@ensdomains/dnsregistrar/DNSRegistrar.sol'
 );
 const tld = 'xyz';
-
+const gas = '1000000';
 function hexEncodeName(name) {
   return '0x' + packet.name.encode(name).toString('hex');
 }
@@ -107,7 +107,7 @@ contract('DNSSEC', function(accounts) {
     assert.equal(await dnssec.digests.call(253), dummyDigest.address);
   });
 
-  it('lookup should accept mocked DNSSEC records', async function() {
+  it('submitProof submit a proof', async function() {
     // Step 1. Look up dns entry
     const dnsprove = new DnsProve(provider);
     const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
@@ -127,40 +127,29 @@ contract('DNSSEC', function(accounts) {
       let rrdata;
       let result = await oracle.knownProof(proof);
       assert.equal(parseInt(result), 0);
-      await oracle.submitProof(proof, proofs[i - 1], { from: owner });
+      await oracle.submitProof(proof, proofs[i - 1], { from: owner, gas:gas });
       result = await oracle.knownProof(proof);
       assert.notEqual(parseInt(result), 0);
     }
     // Step 4. Use the last rrdata as a proof to claim the ownership
     var proof = '0x' + proofs[proofs.length - 1].rrdata.toString('hex');
     let name = hexEncodeName('matoken.xyz');
-    let tx = await registrar.claim(name, proof, { from: owner });
+    let tx = await registrar.claim(name, proof, { from: owner, gas:gas });
     assert.equal(parseInt(tx.receipt.status), 1);
     // Step 5. Confirm that the domain is owned by thw DNS record owner.
     let result = await ens.owner.call(namehash.hash('matoken.xyz'));
     assert.equal(result, owner);
   });
 
-  it('prove should return transactions which need proving', async function() {
+  it('submitAll submits all proofs at once', async function() {
     const dnsprove = new DnsProve(provider);
-    let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
+    let result = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
     let oracle = await dnsprove.getOracle(address);
-    let prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 6);
-    assert.equal(
-      prover.lastProof,
-      '0x' + prover.proofs[5].rrdata.toString('hex')
-    );
-    await oracle.submitProof(prover.proofs[0], null, { from: nonOwner });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 5);
-
-    await oracle.submit(dnsResult, { from: nonOwner });
-    prover = await oracle.getProver(dnsResult);
-    assert.equal(prover.total, 6);
-    assert.equal(prover.unproven, 0);
+    assert.equal((await oracle.getProven(result)), 0);
+    await oracle.submitProof(result.proofs[0], null, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), 1);
+    await oracle.submitAll(result, { from: nonOwner, gas:gas });
+    assert.equal((await oracle.getProven(result)), result.proofs.length);
   });
 
   it('raises error if the DNS entry does not exist', async function() {
