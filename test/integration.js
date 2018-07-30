@@ -165,17 +165,6 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
   
-  
-      nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
-                  .twice()
-                  .reply(200, packet.encode({
-                    questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
-                    answers: [
-                    ]
-                  }));
-  
-  
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA==')
                   .reply(200, packet.encode({
@@ -237,8 +226,6 @@ contract('DNSSEC', function(accounts) {
                       { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                     ]
                   }));
-  
-  
     });
   
     it('submitProof submit a proof', async function() {
@@ -285,6 +272,89 @@ contract('DNSSEC', function(accounts) {
       await oracle.submitAll(result, { from: nonOwner, gas:gas });
       assert.equal((await oracle.getProven(result)), result.proofs.length);
     });  
+  })
+
+  describe('', async function(){
+    this.beforeEach(async function(){
+      let text = Buffer.from(`a=${owner}`, 'ascii');
+      let buffer = new Buffer([]);
+  
+      function rrsigdata(typeCoverd, signersName, override){
+        let obj = {
+          "typeCovered": typeCoverd,
+          "algorithm": 253,
+          "labels": 1,
+          "originalTTL": 300,
+          "expiration": 2528174800,
+          "inception": 1526834834,
+          "keyTag": 1277,
+          "signersName": signersName,
+          "signature": buffer
+        }
+        return Object.assign(obj, override);
+      }
+  
+      let dnskeydata = {
+        "flags": 256,
+        "algorithm": 253,
+        "key": buffer
+      }
+  
+      let dnskeydata2 = {
+        "flags": 257,
+        "algorithm": 253,
+        "key": buffer
+      }
+  
+      let dsdata = {
+        "keyTag": 1277,
+        "algorithm": 253,
+        "digestType": 253,
+        "digest": buffer
+      }
+  
+      nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .once()
+                  .reply(200, packet.encode({
+                    questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
+                    answers: [
+                      { name: 'b', type: 'TXT', class: 'IN',  data: Buffer.from(`a=${owner}`, 'ascii') },
+                      // { name: 'b', type: 'TXT', class: 'IN',ttl: 3600,  data: Buffer.from(`foo`, 'ascii') },
+                      { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1}) }
+                    ]
+                  }));
+  
+      nock('https://dns.google.com')
+                .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                .reply(200, packet.encode({
+                  questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
+                  answers: [
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 256, algorithm: 253, key: new Buffer([])} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: new Buffer([17, 17])} },
+                    // keytag: 5647 = Empty body, flags == 0x0101(257), algorithm = 253, body = 0x1111(17,17)
+                    { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
+                  ]
+                }));          
+    })
+
+    it('b', async function(){
+      accounts
+      // Step 1. Look up dns entry
+      const dnsprove = new DnsProve(provider);
+      const dnsResult = await dnsprove.lookup('TXT', 'b');
+      const oracle = await dnsprove.getOracle(address);
+      // Step 2. Checks that the result is found and is valid.
+      assert.equal(dnsResult.found, true);
+      assert.equal(dnsResult.results[1].rrs[0].data.toString().split('=')[1], owner);
+      let proofs = dnsResult.proofs
+      await oracle.submitProof(proofs[1], null, { from: owner, gas:gas });
+      console.log('submitted');
+      // await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
+      // console.log('submitte1');
+      let result = await oracle.knownProof(dnsResult.proofs[1]);
+      assert.notEqual(parseInt(result), 0);
+    })
   })
 
   // it('raises error if the DNS entry does not exist', async function() {
