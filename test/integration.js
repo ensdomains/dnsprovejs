@@ -12,8 +12,8 @@ const DummyAlgorithm = artifacts.require(
 const DummyDigest = artifacts.require(
   '@ensdomains/dnssec-oracle/DummyDigest.sol'
 );
-const ENSImplementation = artifacts.require(
-  '@ensdomains/dnsregistrar/ENSImplementation.sol'
+const ENSRegistry = artifacts.require(
+  '@ensdomains/ens/ENSRegistry.sol'
 );
 const DNSRegistrar = artifacts.require(
   '@ensdomains/dnsregistrar/DNSRegistrar.sol'
@@ -74,7 +74,7 @@ contract('DNSSEC', function(accounts) {
 
   let address, ens, dummyAlgorithm, dummyDigest, registrar, dnssec;
   beforeEach(async function() {
-    ens = await ENSImplementation.new();
+    ens = await ENSRegistry.new();
     dummyAlgorithm = await DummyAlgorithm.new();
     dummyDigest = await DummyDigest.new();
     let anchors = dns.anchors;
