@@ -8,8 +8,8 @@ var rsasha256         = artifacts.require("@ensdomains/dnssec-oracle/RSASHA256Al
 var sha1              = artifacts.require("@ensdomains/dnssec-oracle/SHA1Digest.sol");
 var sha256            = artifacts.require("@ensdomains/dnssec-oracle/SHA256Digest.sol");
 var nsec3sha1         = artifacts.require("@ensdomains/dnssec-oracle/SHA1NSEC3Digest.sol");
-var ENSImplementation = artifacts.require("@ensdomains/dnsregistrar/ENSImplementation.sol");
 var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar.sol");
+var ENSRegistry       = artifacts.require("@ensdomains/ens/ENSRegistry.sol");
 var dns      = require("@ensdomains/dnssec-oracle/lib/dns.js");
 var namehash = require('eth-ens-namehash');
 var sha3     = require('web3').utils.sha3;
@@ -24,12 +24,12 @@ function hexEncodeName(name){
 module.exports = function(deployer, network) {
   var anchors = dns.anchors;
   return deployer.deploy(DNSSEC, dns.encodeAnchors(anchors))
-    .then(() => deployer.deploy([[ENSImplementation], [rsasha256], [rsasha1], [sha256], [sha1], [nsec3sha1]]))
-    .then(() => ENSImplementation.deployed().then(_ens => ens = _ens))
+    .then(() => deployer.deploy([[ENSRegistry], [rsasha256], [rsasha1], [sha256], [sha1], [nsec3sha1]]))
+    .then(() => ENSRegistry.deployed().then(_ens => ens = _ens))
     .then(() => DNSSEC.deployed().then(_dnssec => dnssec = _dnssec))
     .then(() => deployer.deploy(DNSRegistrar, dnssec.address, ens.address, hexEncodeName(tld), namehash.hash(tld)))
     .then(() => DNSRegistrar.deployed().then(_registrar => registrar = _registrar))
-    .then(() => ENSImplementation.deployed().then(_ens => _ens.setSubnodeOwner(0, sha3(tld), registrar.address)))
+    .then(() => ENSRegistry.deployed().then(_ens => _ens.setSubnodeOwner(0, sha3(tld), registrar.address)))
     .then(() => DNSSEC.deployed().then((_dnssec) => {
       tasks = [];
 

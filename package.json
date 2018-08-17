@@ -1,12 +1,13 @@
 {
   "name": "@ensdomains/dnsprovejs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Port of dnsprove.go",
-  "main": "lib/dnsprover.js",
+  "main": "dist/dnsprover.js",
   "scripts": {
     "test": "truffle migrate && truffle test test/integration.js --network test",
-    "example": "browserify example/main.js -t babelify --outfile example/dist/bundle.js",
-    "prepublishOnly": "truffle compile && truffle networks --clean",
+    "compile": "babel --presets env -d dist lib",
+    "prepublishOnly": "truffle compile && truffle networks --clean && npm run compile",
+    "publish": "browserify lib/dnsprover.js -t babelify --outfile dist/bundle.js",
     "lint": "prettier --write lib/**/* test/**/* example/*.js"
   },
   "prettier": {
@@ -26,6 +27,7 @@
     "web3": "^1.0.0-beta.34"
   },
   "devDependencies": {
+    "@ensdomains/ens": "^0.1.1",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
