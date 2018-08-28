@@ -7,7 +7,6 @@
     "test": "truffle migrate && truffle test test/integration.js --network test",
     "compile": "babel --presets env -d dist lib",
     "prepublishOnly": "truffle compile && truffle networks --clean && npm run compile",
-    "publish": "browserify lib/dnsprover.js -t babelify --outfile dist/bundle.js",
     "lint": "prettier --write lib/**/* test/**/* example/*.js"
   },
   "prettier": {
