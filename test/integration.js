@@ -274,7 +274,7 @@ contract('DNSSEC', function(accounts) {
     });  
   })
 
-  describe('', async function(){
+  describe('b.', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
       let buffer = new Buffer([]);
@@ -320,8 +320,7 @@ contract('DNSSEC', function(accounts) {
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
                     answers: [
                       { name: 'b', type: 'TXT', class: 'IN',  data: Buffer.from(`a=${owner}`, 'ascii') },
-                      // { name: 'b', type: 'TXT', class: 'IN',ttl: 3600,  data: Buffer.from(`foo`, 'ascii') },
-                      { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1}) }
+                      { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1, keyTag:5647}) }
                     ]
                   }));
   
@@ -330,15 +329,15 @@ contract('DNSSEC', function(accounts) {
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 256, algorithm: 253, key: new Buffer([])} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: new Buffer([17, 17])} },
-                    // keytag: 5647 = Empty body, flags == 0x0101(257), algorithm = 253, body = 0x1111(17,17)
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
                     { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                   ]
-                }));          
+                }));
     })
 
-    it('b', async function(){
+    it('inserts .b', async function(){
       accounts
       // Step 1. Look up dns entry
       const dnsprove = new DnsProve(provider);
@@ -348,10 +347,10 @@ contract('DNSSEC', function(accounts) {
       assert.equal(dnsResult.found, true);
       assert.equal(dnsResult.results[1].rrs[0].data.toString().split('=')[1], owner);
       let proofs = dnsResult.proofs
-      await oracle.submitProof(proofs[1], null, { from: owner, gas:gas });
-      console.log('submitted');
-      // await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
-      // console.log('submitte1');
+      // adding anchor;
+      await oracle.submitProof(proofs[0], null, { from: owner, gas:gas });
+      // adding proof;
+      await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.notEqual(parseInt(result), 0);
     })
