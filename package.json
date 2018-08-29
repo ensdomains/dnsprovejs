@@ -1,6 +1,6 @@
 {
   "name": "@ensdomains/dnsprovejs",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Port of dnsprove.go",
   "main": "dist/dnsprover.js",
   "scripts": {
@@ -15,8 +15,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ensdomains/dnsregistrar": "0.0.3",
-    "@ensdomains/dnssec-oracle": "0.0.5",
+    "@ensdomains/dnsregistrar": "0.0.5",
+    "@ensdomains/dnssec-oracle": "0.0.7",
     "babel-polyfill": "^6.26.0",
     "dns-packet": "^5.0.0",
     "es6-promise": "^4.2.4",
