@@ -274,7 +274,7 @@ contract('DNSSEC', function(accounts) {
     });  
   })
 
-  describe('b.', async function(){
+  describe('deleteRRSet', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
       let buffer = new Buffer([]);
@@ -284,7 +284,7 @@ contract('DNSSEC', function(accounts) {
           "typeCovered": typeCoverd,
           "algorithm": 253,
           "labels": 1,
-          "originalTTL": 300,
+          "originalTTL": 3600,
           "expiration": 2528174800,
           "inception": 1526834834,
           "keyTag": 1277,
@@ -325,7 +325,37 @@ contract('DNSSEC', function(accounts) {
                   }));
   
       nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .twice()
+                  .reply(200, packet.encode({
+                    questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
+                    answers: [ ],
+                    authorities:[
+                      {
+                         name:"a",
+                         type:"NSEC",
+                         ttl:3600,
+                         class:"IN",
+                         flush:false,
+                         data:{
+                            nextDomain:"d",
+                            rrtypes:[
+                              "NS",
+                              "SOA",
+                              // TODO: When these are enabled, the test fails. Find out why.
+                              // "RRSIG",
+                              // "NSEC",
+                              "TXT"
+                            ]
+                         }
+                      },
+                      { name: 'a', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', '.', { labels:1, keyTag:5647 }) }
+                   ]
+                  }));
+
+      nock('https://dns.google.com')
                 .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                .times(2)
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
@@ -337,8 +367,7 @@ contract('DNSSEC', function(accounts) {
                 }));
     })
 
-    it('inserts .b', async function(){
-      accounts
+    it('deletes .b', async function(){
       // Step 1. Look up dns entry
       const dnsprove = new DnsProve(provider);
       const dnsResult = await dnsprove.lookup('TXT', 'b');
@@ -349,10 +378,16 @@ contract('DNSSEC', function(accounts) {
       let proofs = dnsResult.proofs
       // adding anchor;
       await oracle.submitProof(proofs[0], null, { from: owner, gas:gas });
-      // adding proof;
+      // adding proof
       await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.notEqual(parseInt(result), 0);
+      const dnsResult2 = await dnsprove.lookup('TXT', 'b');
+      nsecresults = dnsResult2.results
+      let nsecproofs = dnsResult2.proofs
+      await oracle.deleteProof('TXT', 'b', nsecproofs[1], proofs[0], {from:owner, gas:gas})
+      result = await oracle.knownProof(dnsResult.proofs[1]);
+      assert.equal(parseInt(result), 0);
     })
   })
 
