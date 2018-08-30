@@ -29,54 +29,8 @@ contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
   const nonOwner = accounts[1];
   const provider = web3.currentProvider;
-
-  // let stub = sinon.stub(global, 'fetch').callsFake(function(input) {
-  //   return {
-  //     buffer: async () => {
-  //       console.log("input", input)
-  //       // eg: AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA
-  //       let fileName = input.split('=')[2];
-  //       let filePath = './test/fixtures/' + fileName + '.json';
-  //       let response;
-  //       if (fs.existsSync(filePath)) {
-  //         response = fs.readFileSync(filePath, 'utf8');
-  //       } else {
-  //         response = fs.readFileSync('./test/fixtures/notfound.json', 'utf8');
-  //       }
-  //       let decoded = JSON.parse(response, (k, v) => {
-  //         // JSON.stringify cannot serialise Buffer as is so changes it's data format
-  //         // to {data:{type:"Buffer", data:[1,2,1]}}.
-  //         // You need to transform back to Buffer
-  //         // such as {data: new Buffer([1,2,1]) }
-  //         if (
-  //           v !== null &&
-  //           typeof v === 'object' &&
-  //           'type' in v &&
-  //           v.type === 'Buffer' &&
-  //           'data' in v &&
-  //           Array.isArray(v.data)
-  //         ) {
-  //           v = new Buffer(v.data);
-  //         }
-  //         return v;
-  //       });
-  //       // Swap address with dnsregistrar owner as only the address owner can register
-  //       if (
-  //         decoded.answers.length > 0 &&
-  //         decoded.answers[0].name == '_ens.matoken.xyz' &&
-  //         decoded.answers[0].type == 'TXT'
-  //       ) {
-  //         let text = `a=${owner}`;
-  //         decoded.answers[0].data = Buffer.from(text, 'ascii');
-  //       }
-  //       let res = packet.encode(decoded);
-  //       // console.log('res', decoded)
-  //       return res;
-  //     }
-  //   };
-  // });
-
   let address, ens, dummyAlgorithm, dummyDigest, registrar, dnssec;
+
   beforeEach(async function() {
     ens = await ENSRegistry.new();
     dummyAlgorithm = await DummyAlgorithm.new();
