@@ -337,7 +337,8 @@ contract('DNSSEC', function(accounts) {
       let result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.notEqual(parseInt(result), 0);
       const dnsResult2 = await dnsprove.lookup('TXT', 'b');
-      nsecresults = dnsResult2.results
+      assert.equal(dnsResult2.found, false);
+      assert.equal(dnsResult2.nsec, true);
       let nsecproofs = dnsResult2.proofs
       await oracle.deleteProof('TXT', 'b', nsecproofs[1], proofs[0], {from:owner, gas:gas})
       result = await oracle.knownProof(dnsResult.proofs[1]);
@@ -345,10 +346,19 @@ contract('DNSSEC', function(accounts) {
     })
   })
 
-  // it('raises error if the DNS entry does not exist', async function() {
-  //   const dnsprove = new DnsProve(provider);
-  //   let dnsResult = await dnsprove.lookup('TXT', 'example.com', address);
-  //   assert.equal(dnsResult.found, false);
-  // });
+  it('returns found and nsec as false if the DNS entry does not exist', async function() {
+    nock('https://dns.google.com')
+      .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMRbm9uZXhpc3Rpbmdkb21haW4DY29tAAAQAAEAACkQAAAAgAAAAA==')
+      .times(2)
+      .reply(200, packet.encode({
+        questions: [ { name: '_ens.nonexistingdomain.com', type: 'TXT', class: 'IN' } ],
+        answers: []
+      }));
+
+    const dnsprove = new DnsProve(provider);
+    let dnsResult = await dnsprove.lookup('TXT', '_ens.nonexistingdomain.com');
+    assert.equal(dnsResult.found, false);
+    assert.equal(dnsResult.nsec, false);
+  });
 });
 
