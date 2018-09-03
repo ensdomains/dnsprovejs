@@ -24,10 +24,20 @@ if(!dnsResult.found) throw('DNS entry not found');
 var dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
 var oracle    = await dnsprove.getOracle('0x123...');
 var proofs = dnsResult.proofs;
-for(i = 0; i < proofs.length; i++){
-  var proof = proofs[i];
-  if(!await oracle.knownProof(proof)){
-    await oracle.submitProof(proof, proofs[i-1], {from:address})
+
+
+if(dnsResult.found){
+  for(i = 0; i < proofs.length; i++){
+    var proof = proofs[i];
+    if(!await oracle.knownProof(proof)){
+      await oracle.submitProof(proof, proofs[i-1], {from:address})
+    }
+  }
+}else{
+  let lastProof = proofs[proofs.lengh -1]
+  // The record no longer exists.
+  if(dnsResult.nsec && (await oracle.knownProof(lastProof))){
+    await oracle.deleteProof(lastProof, proofs[proofs.lengh -2], {from:address})
   }
 }
 ```
@@ -50,6 +60,7 @@ Or you can submit all in one transaction.
 ### `DnsResult`
 
 - `found` is a proparty containing `true` if the given DNS record is found.
+- `nsec` is a proparty containing `true` if the given DNS record type is either `NSEC` or `NSEC3`
 - `results` is an array of DNS records.
 - `proofs` is an array of proofs which can be submitted to `Oracle` contract.
 - `lastProof` is a hex representation of the last resource record data (aka rrdata)
