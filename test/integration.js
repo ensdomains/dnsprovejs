@@ -105,7 +105,7 @@ contract('DNSSEC', function(accounts) {
     nock.cleanAll()
   })
 
-  describe('submitAll', async function(){
+  describe('submit', async function(){
     beforeEach(async function() {
       let text = Buffer.from(`a=${owner}`, 'ascii');
       nock('https://dns.google.com')
@@ -228,7 +228,70 @@ contract('DNSSEC', function(accounts) {
     });  
   })
 
-  describe('deleteRRSet', async function(){
+  describe('update', async function(){
+    this.beforeEach(async function(){
+      let text = Buffer.from(`a=${owner}`, 'ascii');
+  
+      nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .once()
+                  .reply(200, packet.encode({
+                    questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
+                    answers: [
+                      { name: 'b', type: 'TXT', class: 'IN',  data: Buffer.from(`foo`, 'ascii') },
+                      { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1, keyTag:5647}) }
+                    ]
+                  }));
+  
+      nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .twice()
+                  .reply(200, packet.encode({
+                    questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
+                    answers: [
+                      { name: 'b', type: 'TXT', class: 'IN',  data: Buffer.from(`bar`, 'ascii') },
+                      { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1, keyTag:5647}) }
+                    ]
+                  }));
+
+
+      nock('https://dns.google.com')
+                .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                .times(2)
+                .reply(200, packet.encode({
+                  questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
+                  answers: [
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
+                    { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
+                  ]
+                }));
+    })
+
+    it('updates .b', async function(){
+      // Step 1. Look up dns entry
+      const dnsprove = new DnsProve(provider);
+      const dnsResult = await dnsprove.lookup('TXT', 'b');
+      const oracle = await dnsprove.getOracle(address);
+      // Step 2. Checks that the result is found and is valid.
+      assert.equal(dnsResult.found, true);
+      assert.equal(dnsResult.results[1].rrs[0].data.toString(), 'foo');
+      let proofs = dnsResult.proofs
+      await oracle.submitAll(dnsResult, { from: owner, gas:gas });
+      let result = await oracle.knownProof(dnsResult.proofs[1]);
+      assert.equal(result, oracle.toProve(dnsResult.proofs[1]));
+
+      const dnsResult2 = await dnsprove.lookup('TXT', 'b');
+      assert.equal(dnsResult2.found, true);
+      assert.equal(dnsResult2.results[1].rrs[0].data.toString(), 'bar');
+      await oracle.submitAll(dnsResult2, { from: owner, gas:gas });
+      let result2 = await oracle.knownProof(dnsResult2.proofs[1]);
+      assert.equal(result2, oracle.toProve(dnsResult2.proofs[1]));
+    })
+  })
+
+  describe('delete', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
   
@@ -271,6 +334,7 @@ contract('DNSSEC', function(accounts) {
                       { name: 'a', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', '.', { labels:1, keyTag:5647 }) }
                    ]
                   }));
+
 
       nock('https://dns.google.com')
                 .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
