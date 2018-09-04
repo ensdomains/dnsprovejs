@@ -25,6 +25,42 @@ function hexEncodeName(name) {
   return '0x' + packet.name.encode(name).toString('hex');
 }
 
+let buffer = new Buffer([]);
+  
+function rrsigdata(typeCoverd, signersName, override){
+  let obj = {
+    "typeCovered": typeCoverd,
+    "algorithm": 253,
+    "labels": 1,
+    "originalTTL": 3600,
+    "expiration": 2528174800,
+    "inception": 1526834834,
+    "keyTag": 1277,
+    "signersName": signersName,
+    "signature": buffer
+  }
+  return Object.assign(obj, override);
+}
+
+let dnskeydata = {
+  "flags": 256,
+  "algorithm": 253,
+  "key": buffer
+}
+
+let dnskeydata2 = {
+  "flags": 257,
+  "algorithm": 253,
+  "key": buffer
+}
+
+let dsdata = {
+  "keyTag": 1277,
+  "algorithm": 253,
+  "digestType": 253,
+  "digest": buffer
+}
+
 contract('DNSSEC', function(accounts) {
   const owner = accounts[0];
   const nonOwner = accounts[1];
@@ -69,45 +105,9 @@ contract('DNSSEC', function(accounts) {
     nock.cleanAll()
   })
 
-  describe('_ens.matoken.xyz', async function(){
+  describe('submitAll', async function(){
     beforeEach(async function() {
       let text = Buffer.from(`a=${owner}`, 'ascii');
-      let buffer = new Buffer([]);
-  
-      function rrsigdata(typeCoverd, signersName, override){
-        let obj = {
-          "typeCovered": typeCoverd,
-          "algorithm": 253,
-          "labels": 1,
-          "originalTTL": 300,
-          "expiration": 2528174800,
-          "inception": 1526834834,
-          "keyTag": 1277,
-          "signersName": signersName,
-          "signature": buffer
-        }
-        return Object.assign(obj, override);
-      }
-  
-      let dnskeydata = {
-        "flags": 256,
-        "algorithm": 253,
-        "key": buffer
-      }
-  
-      let dnskeydata2 = {
-        "flags": 257,
-        "algorithm": 253,
-        "key": buffer
-      }
-  
-      let dsdata = {
-        "keyTag": 1277,
-        "algorithm": 253,
-        "digestType": 253,
-        "digest": buffer
-      }
-  
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
                   .once()
@@ -231,41 +231,6 @@ contract('DNSSEC', function(accounts) {
   describe('deleteRRSet', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
-      let buffer = new Buffer([]);
-  
-      function rrsigdata(typeCoverd, signersName, override){
-        let obj = {
-          "typeCovered": typeCoverd,
-          "algorithm": 253,
-          "labels": 1,
-          "originalTTL": 3600,
-          "expiration": 2528174800,
-          "inception": 1526834834,
-          "keyTag": 1277,
-          "signersName": signersName,
-          "signature": buffer
-        }
-        return Object.assign(obj, override);
-      }
-  
-      let dnskeydata = {
-        "flags": 256,
-        "algorithm": 253,
-        "key": buffer
-      }
-  
-      let dnskeydata2 = {
-        "flags": 257,
-        "algorithm": 253,
-        "key": buffer
-      }
-  
-      let dsdata = {
-        "keyTag": 1277,
-        "algorithm": 253,
-        "digestType": 253,
-        "digest": buffer
-      }
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
