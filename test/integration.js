@@ -1,5 +1,4 @@
 const nock = require('nock');
-const sinon = require('sinon');
 const fs = require('fs');
 const packet = require('dns-packet');
 const DnsProve = require('../lib/dnsprover');

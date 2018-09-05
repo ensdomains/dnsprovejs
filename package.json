@@ -20,9 +20,9 @@
     "babel-polyfill": "^6.26.0",
     "dns-packet": "^5.0.0",
     "es6-promise": "^4.2.4",
+    "eth-ens-namehash": "^2.0.8",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
-    "eth-ens-namehash": "^2.0.8",
     "web3": "^1.0.0-beta.34"
   },
   "devDependencies": {
@@ -35,7 +35,6 @@
     "mocha": "^5.2.0",
     "nock": "^9.4.3",
     "prettier": "^1.13.7",
-    "sinon": "^5.0.7",
     "truffle": "^4.1.12"
   }
 }
