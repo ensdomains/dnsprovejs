@@ -119,6 +119,28 @@ contract('DNSSEC', function(accounts) {
                   }));
   
       nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
+                  .twice()
+                  .reply(200, packet.encode({
+                    questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
+                    answers: [ ],
+                    authorities:[
+                      {
+                         name:"_ans.matoken.xyz",
+                         type:"NSEC",
+                         ttl:3600,
+                         class:"IN",
+                         flush:false,
+                         data:{
+                            nextDomain:"_fns.matoken.xyz",
+                            rrtypes:["TXT"]
+                         }
+                      },
+                      { name: '_ans.matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', 'matoken.xyz', { labels:2, keyTag:5647 }) }
+                   ]
+                  }));
+
+      nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA==')
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
@@ -130,6 +152,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
@@ -140,6 +163,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DS', class: 'IN' } ],
                     answers: [
@@ -150,6 +174,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA=')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
@@ -161,6 +186,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA=')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DS', class: 'IN' } ],
                     answers: [
@@ -171,6 +197,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
@@ -181,7 +208,7 @@ contract('DNSSEC', function(accounts) {
                   }));
     });
   
-    it('submitProof submit a proof', async function() {
+    it.only('submitProof submit a proof', async function() {
       // Step 1. Look up dns entry
       const dnsprove = new DnsProve(provider);
       const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
@@ -213,6 +240,18 @@ contract('DNSSEC', function(accounts) {
       // Step 5. Confirm that the domain is owned by thw DNS record owner.
       let result = await ens.owner.call(namehash.hash('matoken.xyz'));
       assert.equal(result, owner);
+      console.log(1)
+      const dnsResult2 = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
+      console.log(2)
+      assert.equal(dnsResult2.found, false);
+      assert.equal(dnsResult2.nsec, true);
+      let nsecproofs = dnsResult2.proofs
+      let lastProof = nsecproofs[nsecproofs.length -1];
+      await oracle.deleteProof('TXT', '_ens.matoken.xyz', lastProof, nsecproofs[nsecproofs.length -2], {from:owner, gas:gas})
+      console.log(3)
+      result = await oracle.knownProof(lastProof);
+      console.log(4)
+      assert.equal(parseInt(result), 0);
     });
   
     it('submitAll submits all proofs at once', async function() {
