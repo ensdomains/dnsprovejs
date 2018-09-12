@@ -397,17 +397,15 @@ contract('DNSSEC', function(accounts) {
       assert.equal(dnsResult.found, true);
       assert.equal(dnsResult.results[1].rrs[0].data.toString().split('=')[1], owner);
       let proofs = dnsResult.proofs
-      // adding anchor;
-      await oracle.submitProof(proofs[0], null, { from: owner, gas:gas });
-      // adding proof
-      await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
+      // adding proofs;
+      await oracle.submitAll(dnsResult, { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.notEqual(parseInt(result), 0);
       const dnsResult2 = await dnsprove.lookup('TXT', 'b');
       assert.equal(dnsResult2.found, false);
       assert.equal(dnsResult2.nsec, true);
       let nsecproofs = dnsResult2.proofs
-      await oracle.deleteProof('TXT', 'b', nsecproofs[1], proofs[0], {from:owner, gas:gas})
+      await oracle.deleteProof('TXT', 'b', nsecproofs[1], nsecproofs[0], {from:owner, gas:gas})
       result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.equal(parseInt(result), 0);
     })
