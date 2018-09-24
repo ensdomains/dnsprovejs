@@ -119,17 +119,40 @@ contract('DNSSEC', function(accounts) {
                   }));
   
       nock('https://dns.google.com')
+                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
+                  .twice()
+                  .reply(200, packet.encode({
+                    questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
+                    answers: [ ],
+                    authorities:[
+                      {
+                         name:"_ans.matoken.xyz",
+                         type:"NSEC",
+                         ttl:3600,
+                         class:"IN",
+                         flush:false,
+                         data:{
+                            nextDomain:"_fns.matoken.xyz",
+                            rrtypes:["TXT"]
+                         }
+                      },
+                      { name: '_ans.matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', 'matoken.xyz', { labels:3, keyTag:1277 }) }
+                   ]
+                  }));
+
+      nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA==')
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
                     answers: [
                       { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN',  data: text },
-                      { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3}) }
+                      { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3, keyTag:5647}) }
                     ]
                   }));
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
@@ -140,6 +163,7 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DS', class: 'IN' } ],
                     answers: [
@@ -150,42 +174,45 @@ contract('DNSSEC', function(accounts) {
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA=')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
                       { name: 'xyz', type: 'DNSKEY', class: 'IN', data: dnskeydata },
                       { name: 'xyz', type: 'DNSKEY', class: 'IN', data: dnskeydata2 },
-                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'xyz') }
+                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'xyz', {labels:1}) }
                     ]
                   }));
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA=')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DS', class: 'IN' } ],
                     answers: [
-                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DS', '.') },
+                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DS', '.', {labels:1, keyTag:5647}) },
                       { name: 'xyz', type: 'DS', class: 'IN', data: dsdata }
                     ]
                   }));
   
       nock('https://dns.google.com')
                   .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                  .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
-                      { name: '.', type: 'DNSKEY', class: 'IN', data: dnskeydata },
-                      { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: new Buffer([17, 17])} },
+                      { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
                       { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                     ]
                   }));
     });
   
-    it('submitProof submit a proof', async function() {
+    it('full end to end test', async function() {
       // Step 1. Look up dns entry
       const dnsprove = new DnsProve(provider);
       const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
       const oracle = await dnsprove.getOracle(address);
+
       // Step 2. Checks that the result is found and is valid.
       assert.equal(dnsResult.found, true);
       assert.equal(
@@ -194,6 +221,7 @@ contract('DNSSEC', function(accounts) {
       );
       assert.equal(dnsResult.proofs.length, 6);
       assert.equal(dnsResult.proofs[0].name, '.');
+
       // Step 3. Submit each proof to DNSSEC oracle
       let proofs = dnsResult.proofs;
       for (let i = 0; i < proofs.length; i++) {
@@ -205,14 +233,30 @@ contract('DNSSEC', function(accounts) {
         result = await oracle.knownProof(proof);
         assert.notEqual(parseInt(result), 0);
       }
+
       // Step 4. Use the last rrdata as a proof to claim the ownership
       var proof = '0x' + proofs[proofs.length - 1].rrdata.toString('hex');
       let name = hexEncodeName('matoken.xyz');
       let tx = await registrar.claim(name, proof, { from: owner, gas:gas });
       assert.equal(parseInt(tx.receipt.status), 1);
+
       // Step 5. Confirm that the domain is owned by thw DNS record owner.
       let result = await ens.owner.call(namehash.hash('matoken.xyz'));
       assert.equal(result, owner);
+
+      // Step 6. Call the domain again which is now removed.
+      const dnsResult2 = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
+      assert.equal(dnsResult2.found, false);
+      assert.equal(dnsResult2.nsec, true);
+      let nsecproofs = dnsResult2.proofs
+      let lastProof = nsecproofs[nsecproofs.length -1];
+      // Step 7. Delete the proof
+      await oracle.deleteProof('TXT', '_ens.matoken.xyz', lastProof, nsecproofs[nsecproofs.length -2], {from:owner, gas:gas})
+      assert.equal(parseInt(await oracle.knownProof(lastProof)), 0);
+
+      // Step 8. Remove the entry from ENS
+      await registrar.claim(name, '', { from: owner, gas:gas });
+      assert.equal(parseInt(await ens.owner.call(namehash.hash('matoken.xyz'))), 0);
     });
   
     it('submitAll submits all proofs at once', async function() {
@@ -261,8 +305,8 @@ contract('DNSSEC', function(accounts) {
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
                     { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1112", "HEX")} },
                     { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                   ]
                 }));
@@ -342,8 +386,8 @@ contract('DNSSEC', function(accounts) {
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
                     { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1112", "HEX")} },
                     { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                   ]
                 }));
@@ -358,17 +402,15 @@ contract('DNSSEC', function(accounts) {
       assert.equal(dnsResult.found, true);
       assert.equal(dnsResult.results[1].rrs[0].data.toString().split('=')[1], owner);
       let proofs = dnsResult.proofs
-      // adding anchor;
-      await oracle.submitProof(proofs[0], null, { from: owner, gas:gas });
-      // adding proof
-      await oracle.submitProof(proofs[1], proofs[0], { from: owner, gas:gas });
+      // adding proofs;
+      await oracle.submitAll(dnsResult, { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.notEqual(parseInt(result), 0);
       const dnsResult2 = await dnsprove.lookup('TXT', 'b');
       assert.equal(dnsResult2.found, false);
       assert.equal(dnsResult2.nsec, true);
       let nsecproofs = dnsResult2.proofs
-      await oracle.deleteProof('TXT', 'b', nsecproofs[1], proofs[0], {from:owner, gas:gas})
+      await oracle.deleteProof('TXT', 'b', nsecproofs[1], nsecproofs[0], {from:owner, gas:gas})
       result = await oracle.knownProof(dnsResult.proofs[1]);
       assert.equal(parseInt(result), 0);
     })
