@@ -136,7 +136,7 @@ contract('DNSSEC', function(accounts) {
                             rrtypes:["TXT"]
                          }
                       },
-                      { name: '_ans.matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', 'matoken.xyz', { labels:3, keyTag:5647 }) }
+                      { name: '_ans.matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('NSEC', 'matoken.xyz', { labels:3, keyTag:1277 }) }
                    ]
                   }));
 
@@ -146,7 +146,7 @@ contract('DNSSEC', function(accounts) {
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
                     answers: [
                       { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN',  data: text },
-                      { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3}) }
+                      { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3, keyTag:5647}) }
                     ]
                   }));
   
@@ -180,7 +180,7 @@ contract('DNSSEC', function(accounts) {
                     answers: [
                       { name: 'xyz', type: 'DNSKEY', class: 'IN', data: dnskeydata },
                       { name: 'xyz', type: 'DNSKEY', class: 'IN', data: dnskeydata2 },
-                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'xyz') }
+                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'xyz', {labels:1}) }
                     ]
                   }));
   
@@ -190,7 +190,7 @@ contract('DNSSEC', function(accounts) {
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DS', class: 'IN' } ],
                     answers: [
-                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DS', '.') },
+                      { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DS', '.', {labels:1, keyTag:5647}) },
                       { name: 'xyz', type: 'DS', class: 'IN', data: dsdata }
                     ]
                   }));
@@ -201,8 +201,7 @@ contract('DNSSEC', function(accounts) {
                   .reply(200, packet.encode({
                     questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                     answers: [
-                      { name: '.', type: 'DNSKEY', class: 'IN', data: dnskeydata },
-                      { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: new Buffer([17, 17])} },
+                      { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
                       { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                     ]
                   }));
@@ -306,8 +305,8 @@ contract('DNSSEC', function(accounts) {
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
                     { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1112", "HEX")} },
                     { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                   ]
                 }));
@@ -387,8 +386,8 @@ contract('DNSSEC', function(accounts) {
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
                   answers: [
                     { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0x0101, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1111", "HEX")} },
-                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 0, algorithm: 253, key: Buffer.from("1112", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1111", "HEX")} },
+                    { name: '.', type: 'DNSKEY', class: 'IN', data: {flags: 257, algorithm: 253, key: Buffer.from("1112", "HEX")} },
                     { name: '.', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', '.', { labels:0, keyTag:5647 }) }
                   ]
                 }));
