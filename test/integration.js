@@ -25,7 +25,7 @@ function hexEncodeName(name) {
 }
 
 let buffer = new Buffer([]);
-  
+
 function rrsigdata(typeCoverd, signersName, override){
   let obj = {
     "typeCovered": typeCoverd,
@@ -108,7 +108,7 @@ contract('DNSSEC', function(accounts) {
     beforeEach(async function() {
       let text = Buffer.from(`a=${owner}`, 'ascii');
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
@@ -117,9 +117,9 @@ contract('DNSSEC', function(accounts) {
                       { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
@@ -141,7 +141,7 @@ contract('DNSSEC', function(accounts) {
                   }));
 
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA==')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA=='})
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
                     answers: [
@@ -149,9 +149,9 @@ contract('DNSSEC', function(accounts) {
                       { name: '_ens.matoken.xyz', type: 'RRSIG',class: 'IN', data: rrsigdata('TXT', 'matoken.xyz', {labels:3, keyTag:5647}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA==')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DNSKEY', class: 'IN' } ],
@@ -160,9 +160,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'matoken.xyz', { labels: 2}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA==')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DS', class: 'IN' } ],
@@ -171,9 +171,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'matoken.xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DS', 'xyz', { labels:2 }) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA=')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DNSKEY', class: 'IN' } ],
@@ -183,9 +183,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'xyz', type: 'RRSIG',  class: 'IN', data: rrsigdata('DNSKEY', 'xyz', {labels:1}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA=')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DS', class: 'IN' } ],
@@ -194,9 +194,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'xyz', type: 'DS', class: 'IN', data: dsdata }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -206,7 +206,7 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
     });
-  
+
     it('full end to end test', async function() {
       // Step 1. Look up dns entry
       const dnsprove = new DnsProve(provider);
@@ -253,7 +253,7 @@ contract('DNSSEC', function(accounts) {
       await registrar.claim(name, '', { from: owner, gas:gas });
       assert.equal(parseInt(await ens.owner.call(namehash.hash('matoken.xyz'))), 0);
     });
-  
+
     it('submitAll submits all proofs at once', async function() {
       const dnsprove = new DnsProve(provider);
       let result = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
@@ -263,15 +263,15 @@ contract('DNSSEC', function(accounts) {
       assert.equal((await oracle.getProven(result)), 1);
       await oracle.submitAll(result, { from: nonOwner, gas:gas });
       assert.equal((await oracle.getProven(result)), result.proofs.length);
-    });  
+    });
   })
 
   describe('update', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -280,9 +280,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1, keyTag:5647}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -294,7 +294,7 @@ contract('DNSSEC', function(accounts) {
 
 
       nock('https://dns.google.com')
-                .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                 .times(2)
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -332,9 +332,9 @@ contract('DNSSEC', function(accounts) {
   describe('delete', async function(){
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -343,9 +343,9 @@ contract('DNSSEC', function(accounts) {
                       { name: 'b', type: 'RRSIG',class: 'IN',ttl: 3600, data: rrsigdata('TXT', '.', {labels:1, keyTag:5647}) }
                     ]
                   }));
-  
+
       nock('https://dns.google.com')
-                  .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA')
+                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -375,7 +375,7 @@ contract('DNSSEC', function(accounts) {
 
 
       nock('https://dns.google.com')
-                .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA==')
+                .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                 .times(2)
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -413,7 +413,7 @@ contract('DNSSEC', function(accounts) {
 
   it('returns found and nsec as false if the DNS entry does not exist', async function() {
     nock('https://dns.google.com')
-      .get('/experimental?ct=application/dns-udpwireformat&dns=AAEBAAABAAAAAAABBF9lbnMRbm9uZXhpc3Rpbmdkb21haW4DY29tAAAQAAEAACkQAAAAgAAAAA==')
+      .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMRbm9uZXhpc3Rpbmdkb21haW4DY29tAAAQAAEAACkQAAAAgAAAAA=='})
       .times(2)
       .reply(200, packet.encode({
         questions: [ { name: '_ens.nonexistingdomain.com', type: 'TXT', class: 'IN' } ],
@@ -426,4 +426,3 @@ contract('DNSSEC', function(accounts) {
     assert.equal(dnsResult.nsec, false);
   });
 });
-
