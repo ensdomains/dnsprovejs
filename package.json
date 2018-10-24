@@ -18,7 +18,7 @@
     "@ensdomains/dnsregistrar": "0.0.5",
     "@ensdomains/dnssec-oracle": "0.0.7",
     "babel-polyfill": "^6.26.0",
-    "dns-packet": "^5.0.0",
+    "dns-packet": "^5.0.4",
     "es6-promise": "^4.2.4",
     "eth-ens-namehash": "^2.0.8",
     "ethereumjs-util": "^5.2.0",
