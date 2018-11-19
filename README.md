@@ -73,7 +73,8 @@ Or you can submit all in one transaction.
 - `getAllProofs(dnsresult)` returns all the proofs needs to be submitted into DNSSEC Oracle. It travarses from the leaf of the chain of proof to check if proof in DNSSEC Oracle and the one from DNS record matches with valid inception value. This function is used so that it can pass the necessary proof to `dnsregistrar.proveAndClaim` function.
 - `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
 - `deleteProof(type, name, proof, prevProof, params)` deletes a proof
-- `knownProof(proof)` returns an object with the following fields.
+- `knownProof(proof)` returns a `proof` object with the following fields.
+
 
 |field    |value    |
 |---------|----     |
