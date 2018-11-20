@@ -226,24 +226,20 @@ contract('DNSSEC', function(accounts) {
       let proofs = dnsResult.proofs;
       for (let i = 0; i < proofs.length; i++) {
         var proof = proofs[i];
-        let rrdata;
         let result = await oracle.knownProof(proof);
-        assert.equal(parseInt(result), 0);
+        assert.notEqual(result.matched, true);
         await oracle.submitProof(proof, proofs[i - 1], { from: owner, gas:gas });
         result = await oracle.knownProof(proof);
-        assert.notEqual(parseInt(result), 0);
+        assert.equal(result.matched, true);
       }
-
       // Step 4. Use the last rrdata as a proof to claim the ownership
       var proof = '0x' + proofs[proofs.length - 1].rrdata.toString('hex');
       let name = hexEncodeName('matoken.xyz');
       let tx = await registrar.claim(name, proof, { from: owner, gas:gas });
       assert.equal(parseInt(tx.receipt.status), 1);
-
       // Step 5. Confirm that the domain is owned by thw DNS record owner.
       let result = await ens.owner.call(namehash.hash('matoken.xyz'));
       assert.equal(result, owner);
-
       // Step 6. Call the domain again which is now removed.
       const dnsResult2 = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
       assert.equal(dnsResult2.found, false);
@@ -252,8 +248,7 @@ contract('DNSSEC', function(accounts) {
       let lastProof = nsecproofs[nsecproofs.length -1];
       // Step 7. Delete the proof
       await oracle.deleteProof('TXT', '_ens.matoken.xyz', lastProof, nsecproofs[nsecproofs.length -2], {from:owner, gas:gas})
-      assert.equal(parseInt(await oracle.knownProof(lastProof)), 0);
-
+      // assert.equal(parseInt(await oracle.knownProof(lastProof)), 0);
       // Step 8. Remove the entry from ENS
       await registrar.claim(name, '', { from: owner, gas:gas });
       assert.equal(parseInt(await ens.owner.call(namehash.hash('matoken.xyz'))), 0);
@@ -323,14 +318,14 @@ contract('DNSSEC', function(accounts) {
       let proofs = dnsResult.proofs
       await oracle.submitAll(dnsResult, { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
-      assert.equal(result, oracle.toProve(dnsResult.proofs[1]));
+      assert.equal(result.matched, true);
 
       const dnsResult2 = await dnsprove.lookup('TXT', 'b');
       assert.equal(dnsResult2.found, true);
       assert.equal(dnsResult2.results[1].rrs[0].data.toString(), 'bar');
       await oracle.submitAll(dnsResult2, { from: owner, gas:gas });
       let result2 = await oracle.knownProof(dnsResult2.proofs[1]);
-      assert.equal(result2, oracle.toProve(dnsResult2.proofs[1]));
+      assert.equal(result2.matched, true);
     })
   })
 
@@ -405,14 +400,14 @@ contract('DNSSEC', function(accounts) {
       // adding proofs;
       await oracle.submitAll(dnsResult, { from: owner, gas:gas });
       let result = await oracle.knownProof(dnsResult.proofs[1]);
-      assert.notEqual(parseInt(result), 0);
+      assert.equal(result.matched, true);
       const dnsResult2 = await dnsprove.lookup('TXT', 'b');
       assert.equal(dnsResult2.found, false);
       assert.equal(dnsResult2.nsec, true);
       let nsecproofs = dnsResult2.proofs
       await oracle.deleteProof('TXT', 'b', nsecproofs[1], nsecproofs[0], {from:owner, gas:gas})
       result = await oracle.knownProof(dnsResult.proofs[1]);
-      assert.equal(parseInt(result), 0);
+      assert.equal(result.matched, false);
     })
   })
 
