@@ -52,39 +52,7 @@ Or you can submit all in one transaction.
 
 ## API
 
-### `DnsProve`
-
-- `lookup(type, name)` takes DNS record type and name. It returns `DnsResult` object.
-- `getOracle(address)` returns DNSSEC oracle(`Oracle`) object.
-
-### `DnsResult`
-
-- `found` is a proparty containing `true` if the given DNS record is found.
-- `nsec` is a proparty containing `true` if the given DNS record type is either `NSEC` or `NSEC3`
-- `results` is an array of DNS records.
-- `proofs` is an array of proofs which can be submitted to `Oracle` contract.
-- `lastProof` is a hex representation of the last resource record data (aka rrdata)
-
-### `Oracle`
-
-`Oracle` is a wrapper object of `DNSSEC.sol` Oracle smart contract.
-
-- `submitAll(dnsresult, params)` submits all required proofs into the DNSSEC oracle as one transaction in a batch.
-- `getAllProofs(dnsresult)` returns all the proofs needs to be submitted into DNSSEC Oracle. It traverses from the leaf of the chain of proof to check if proof in DNSSEC Oracle and the one from DNS record matches with valid inception value. This function is used so that it can pass the necessary proof to `dnsregistrar.proveAndClaim` function.
-- `submitProof(proof, prevProof, params)` submits a proof to Oracle contract. If `prevProof` is `null`, the oracle contract uses hard-coded root anchor proof to validate the validity of the proof given. `params` is used to pass any params to be sent to transaction, such as `{from:address}`.
-- `deleteProof(type, name, proof, prevProof, params)` deletes a proof
-- `knownProof(proof)` returns a `proof` object with the following fields.
-
-
-|field    |value    |
-|---------|----     |
-|inception|inception time (the time the signature was generated) stored in DNSSEC oracle|
-|inserted|the time the record was inserted into DNSSEC oracle|
-|hash|hash of proof stored in DNSSEC oracle |
-|hashToProve|hash of proof constructed from DNS record|
-|validInception|returns true if inception in DNSSEC oracle is older than the one from DNS record. Returns false if the record from DNS record is older (happens when cached)|
-|matched|returns true if inception is valid and hash is matched|
-
+Please refer to [the doc](https://dnsprovejs.readthedocs.io/en/doc)
 
 ## Testing
 
@@ -92,20 +60,3 @@ Or you can submit all in one transaction.
   npm run test
 ```
 
-### Running demo
-
-```
-# The test page extracts contract info from build/contracts/*.json 
-truffle migrate --network development
-# compile example/main.js into example/dist/bundle.js
-npm run example
-cd example
-python -m SimpleHTTPServer 
-open http://localhost:8000
-```
-
-## TODO
-
-- Raise an error message when proofs are not valid.
-- Raise an error message when failed to submit proof to oracle
-- Add unit tests
