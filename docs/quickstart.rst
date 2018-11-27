@@ -49,3 +49,15 @@ Or you can submit all in one transaction.
         await oracle.submitAll(dnsResult, {from:nonOwner});
         
 
+DnsRegistrar
+============
+
+If you want to use this library to register into ENS, you may want to use `DNSregistrar <https://github.com/ensdomains/dnsregistrar>`_ which wraps this library and calls DNSSEC Oracle and DnsRegistrar in one function call.
+
+.. code-block:: javascript
+
+        var DNSRegistrarJs = require('@ensdomains/dnsregistrar');
+        dnsregistrar = new DNSRegistrarJs(provider, dnsregistraraddress);
+        dnsregistrar.claim('foo.test').then((claim)=>{
+            claim.submit({from:account});
+        })
