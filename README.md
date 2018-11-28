@@ -50,7 +50,7 @@ Alternatively, if you want to submit the proof not only to Oracle contract but a
 ```
 ## API
 
-Please refer to [the doc](https://dnsprovejs.readthedocs.io/en/doc)
+Please refer to [the doc](https://dnsprovejs.readthedocs.io)
 
 ## Testing
 
