@@ -22,6 +22,14 @@ Oracle
 .. autofunction:: Oracle#deleteProof
 .. autofunction:: OracleProof
 
+Proof
+=====
+
+`Proof` contains rrset and signature data which is submitted into DNSSEC Oracle.
+
+.. autofunction:: Proof
+.. autofunction:: Proof#toSubmit
+
 DnsResult
 ===========
 
