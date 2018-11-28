@@ -22,9 +22,9 @@ Oracle
 .. autofunction:: Oracle#deleteProof
 .. autofunction:: OracleProof
 
-ProofResult
+DnsResult
 ===========
 
-`ProofResult` is an object returned by calling `lookup` function and contains information about the DNS record.
+`DnsResult` is an object returned by calling `lookup` function and contains information about the DNS record.
 
-.. autofunction:: ProofResult
+.. autofunction:: DnsResult
