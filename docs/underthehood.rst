@@ -12,7 +12,7 @@ Given the hashes of that key, we can pass in the actual key, we can verify that 
 Given that key, we can now verify any record that is signed with that key, so in this case, it's the hash of the root of the xyz top level domain.
 Given that, we can recognize the key, and so on and so forth.
 
-.. image:: https://cdn-images-1.medium.com/max/720/1*iWgDzP9M3c9PH7R8umsbCQ.png
+.. image:: ./diagram.png
 
 So next, you can regonize the key for the ethlab.xyz.
 Given that, we can recognize the hash for the key, and then key itself,and finally you can verify a signed text record that contains the Ethereum address.
