@@ -81,7 +81,7 @@ To construct a proof to submit to Oracle smart contract, you first need to provi
             }
         ]
 
-Once the data is constructed, Instantiate `Result` object with the data which constructs the proofs. `toSubmit` will generate the input data.
+Once the data is constructed, Instantiate `Result` object with the data which builds the proofs. `toSubmit` will generate the input data.
 
 .. code-block:: javascript
 

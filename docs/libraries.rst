@@ -13,7 +13,7 @@ DnsProver
 Oracle
 ======
 
-`Oracle` interact with DNSSEC Oracle smart contract.
+`Oracle` interacts with DNSSEC Oracle smart contract.
 
 .. autofunction:: Oracle#knownProof
 .. autofunction:: Oracle#submitAll

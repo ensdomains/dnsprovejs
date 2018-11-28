@@ -37,7 +37,7 @@ Usage
             throw("DNSSEC is not supported")
         }
 
-Alternatively, if you want to submit the proof not only to Oracle contract but also to claim the via `dnsregistrar`, then you can call `getAllProofs` and pass the result into the `proveAndClaim` function.
+Alternatively, if you want to submit the proof not only to Oracle contract but also to claim via `dnsregistrar`, then you can call `getAllProofs` and pass the result into the `proveAndClaim` function.
 
 .. code-block:: javascript
 

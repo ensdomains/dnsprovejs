@@ -38,7 +38,7 @@ npm install '@ensdomains/dnsprovejs' --save
     }
 ```
 
-Alternatively, if you want to submit the proof not only to Oracle contract but also to claim the via `dnsregistrar`, then you can call `getAllProofs` and pass the result into the `proveAndClaim` function.
+Alternatively, if you want to submit the proof not only to Oracle contract but also to claim via `dnsregistrar`, then you can call `getAllProofs` and pass the result into the `proveAndClaim` function.
 
 ```js
     let dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz', address);
