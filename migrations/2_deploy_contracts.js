@@ -11,10 +11,12 @@ var sha256            = artifacts.require("@ensdomains/dnssec-oracle/SHA256Diges
 var nsec3sha1         = artifacts.require("@ensdomains/dnssec-oracle/SHA1NSEC3Digest.sol");
 var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar.sol");
 var ENSRegistry       = artifacts.require("@ensdomains/ens/ENSRegistry.sol");
-var dns      = require("@ensdomains/dnssec-oracle/lib/dns.js");
+
+const packet = require('dns-packet');
+// This will be replaced by "@ensdomains/dnssec-oracle" once PR is merged
+const dnsAnchors = require("dnssec-oracle/lib/anchors.js");
 var namehash = require('eth-ens-namehash');
 var sha3     = require('web3').utils.sha3;
-const packet = require('dns-packet');
 var tld = "xyz";
 let ens, algorithm, digest;
 
@@ -23,8 +25,9 @@ function hexEncodeName(name){
 }
 
 module.exports = function(deployer, network) {
-  var anchors = dns.anchors;
-  return deployer.deploy(DNSSEC, dns.encodeAnchors(anchors))
+  let anchors = dnsAnchors.realEntries;
+
+  return deployer.deploy(DNSSEC, dnsAnchors.encode(anchors))
     .then(() => deployer.deploy([[ENSRegistry], [rsasha256], [rsasha1], [sha256], [sha1], [nsec3sha1]]))
     .then(() => ENSRegistry.deployed().then(_ens => ens = _ens))
     .then(() => DNSSEC.deployed().then(_dnssec => dnssec = _dnssec))
