@@ -13,8 +13,8 @@ var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar
 var ENSRegistry       = artifacts.require("@ensdomains/ens/ENSRegistry.sol");
 
 const packet = require('dns-packet');
-// This will be replaced by "@ensdomains/dnssec-oracle" once PR is merged
-const dnsAnchors = require("dnssec-oracle/lib/anchors.js");
+const dnsAnchors = require("@ensdomains/dnssec-oracle/lib/anchors.js");
+
 var namehash = require('eth-ens-namehash');
 var sha3     = require('web3').utils.sha3;
 var tld = "xyz";

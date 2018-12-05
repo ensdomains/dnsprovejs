@@ -4,8 +4,7 @@ const packet = require('dns-packet');
 const DnsProve = require('../lib/dnsprover');
 const namehash = require('eth-ens-namehash');
 const sha3 = require('web3').utils.sha3;
-// This will be replaced by "@ensdomains/dnssec-oracle" once PR is merged
-const dnsAnchors = require("dnssec-oracle/lib/anchors.js");
+const dnsAnchors = require("@ensdomains/dnssec-oracle/lib/anchors.js");
 
 const DNSSEC = artifacts.require('@ensdomains/dnssec-oracle/DNSSECImpl.sol');
 const DummyAlgorithm = artifacts.require(
