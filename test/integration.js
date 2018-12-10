@@ -4,7 +4,8 @@ const packet = require('dns-packet');
 const DnsProve = require('../lib/dnsprover');
 const namehash = require('eth-ens-namehash');
 const sha3 = require('web3').utils.sha3;
-const dns = require('@ensdomains/dnssec-oracle/lib/dns.js');
+const dnsAnchors = require("@ensdomains/dnssec-oracle/lib/anchors.js");
+
 const DNSSEC = artifacts.require('@ensdomains/dnssec-oracle/DNSSECImpl.sol');
 const DummyAlgorithm = artifacts.require(
   '@ensdomains/dnssec-oracle/DummyAlgorithm.sol'
@@ -70,12 +71,12 @@ contract('DNSSEC', function(accounts) {
     ens = await ENSRegistry.new();
     dummyAlgorithm = await DummyAlgorithm.new();
     dummyDigest = await DummyDigest.new();
-    let anchors = dns.anchors;
-    anchors.push(dns.dummyAnchor);
-    dnssec = await DNSSEC.new(dns.encodeAnchors(anchors));
+    let anchors = dnsAnchors.realEntries;
+    anchors.push(dnsAnchors.dummyEntry);
+    dnssec = await DNSSEC.new(dnsAnchors.encode(anchors));
     address = dnssec.address;
 
-    assert.equal(await dnssec.anchors.call(), dns.encodeAnchors(anchors));
+    assert.equal(await dnssec.anchors.call(), dnsAnchors.encode(anchors));
     registrar = await DNSRegistrar.new(
       dnssec.address,
       ens.address,
