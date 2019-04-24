@@ -79,15 +79,11 @@ contract('DNSSEC', function(accounts) {
     assert.equal(await dnssec.anchors.call(), dnsAnchors.encode(anchors));
     registrar = await DNSRegistrar.new(
       dnssec.address,
-      ens.address,
-      hexEncodeName(tld),
-      namehash.hash(tld)
+      ens.address
     );
 
     assert.equal(await registrar.oracle.call(), dnssec.address);
     assert.equal(await registrar.ens.call(), ens.address);
-    assert.equal(await registrar.rootDomain.call(), hexEncodeName(tld));
-    assert.equal(await registrar.rootNode.call(), namehash.hash(tld));
 
     await ens.setSubnodeOwner(0, sha3(tld), registrar.address);
     assert.equal(await ens.owner.call(namehash.hash(tld)), registrar.address);
@@ -108,8 +104,8 @@ contract('DNSSEC', function(accounts) {
   describe('submit', async function(){
     beforeEach(async function() {
       let text = Buffer.from(`a=${owner}`, 'ascii');
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
@@ -119,8 +115,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
@@ -141,8 +137,8 @@ contract('DNSSEC', function(accounts) {
                    ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMHbWF0b2tlbgN4eXoAABAAAQAAKRAAAACAAAAA=='})
                   .reply(200, packet.encode({
                     questions: [ { name: '_ens.matoken.xyz', type: 'TXT', class: 'IN' } ],
                     answers: [
@@ -151,8 +147,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAAwAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DNSKEY', class: 'IN' } ],
@@ -162,8 +158,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABB21hdG9rZW4DeHl6AAArAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'matoken.xyz', type: 'DS', class: 'IN' } ],
@@ -173,8 +169,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAMAABAAApEAAAAIAAAAA='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DNSKEY', class: 'IN' } ],
@@ -185,8 +181,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABA3h5egAAKwABAAApEAAAAIAAAAA='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: 'xyz', type: 'DS', class: 'IN' } ],
@@ -196,8 +192,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                   .times(2)
                   .reply(200, packet.encode({
                     questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -271,8 +267,8 @@ contract('DNSSEC', function(accounts) {
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -282,8 +278,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -294,8 +290,8 @@ contract('DNSSEC', function(accounts) {
                   }));
 
 
-      nock('https://dns.google.com')
-                .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                 .times(2)
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -334,8 +330,8 @@ contract('DNSSEC', function(accounts) {
     this.beforeEach(async function(){
       let text = Buffer.from(`a=${owner}`, 'ascii');
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .once()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -345,8 +341,8 @@ contract('DNSSEC', function(accounts) {
                     ]
                   }));
 
-      nock('https://dns.google.com')
-                  .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
+      nock('https://cloudflare-dns.com')
+                  .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAWIAABAAAQAAKRAAAACAAAAA'})
                   .twice()
                   .reply(200, packet.encode({
                     questions: [ { name: 'b', type: 'TXT', class: 'IN' } ],
@@ -375,8 +371,8 @@ contract('DNSSEC', function(accounts) {
                   }));
 
 
-      nock('https://dns.google.com')
-                .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
+      nock('https://cloudflare-dns.com')
+                .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABAAAwAAEAACkQAAAAgAAAAA=='})
                 .times(2)
                 .reply(200, packet.encode({
                   questions: [ { name: '.', type: 'DNSKEY', class: 'IN' } ],
@@ -413,8 +409,8 @@ contract('DNSSEC', function(accounts) {
   })
 
   it('returns found and nsec as false if the DNS entry does not exist', async function() {
-    nock('https://dns.google.com')
-      .get('/experimental').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMRbm9uZXhpc3Rpbmdkb21haW4DY29tAAAQAAEAACkQAAAAgAAAAA=='})
+    nock('https://cloudflare-dns.com')
+      .get('/dns-query').query({ct: 'application/dns-udpwireformat', ts: /.*/, dns: 'AAEBAAABAAAAAAABBF9lbnMRbm9uZXhpc3Rpbmdkb21haW4DY29tAAAQAAEAACkQAAAAgAAAAA=='})
       .times(2)
       .reply(200, packet.encode({
         questions: [ { name: '_ens.nonexistingdomain.com', type: 'TXT', class: 'IN' } ],
