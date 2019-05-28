@@ -23,6 +23,7 @@
     "eth-ens-namehash": "^2.0.8",
     "ethereumjs-util": "^5.2.0",
     "isomorphic-fetch": "^2.2.1",
+    "js-sha1": "^0.6.0",
     "web3": "1.0.0-beta.34"
   },
   "devDependencies": {
