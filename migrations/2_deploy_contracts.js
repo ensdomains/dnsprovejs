@@ -13,12 +13,12 @@ var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar
 var ENSRegistry       = artifacts.require("@ensdomains/ens/ENSRegistry.sol");
 
 const packet = require('dns-packet');
-const dnsAnchors = require("@ensdomains/dnssec-oracle/lib/anchors.js");
+const dnsAnchors = require('@ensdomains/dnssec-oracle/lib/anchors.js');
 
 var sha3     = require('web3').utils.sha3;
 var tld = "xyz";
 
-function hexEncodeName(name){
+function hexEncodeName(name) {
   return '0x' + packet.name.encode(name).toString('hex');
 }
 
