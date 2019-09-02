@@ -85,7 +85,7 @@ contract('DNSSEC', function(accounts) {
     assert.equal(await registrar.oracle.call(), dnssec.address);
     assert.equal(await registrar.ens.call(), ens.address);
 
-    await ens.setSubnodeOwner(0, sha3(tld), registrar.address);
+    await ens.setSubnodeOwner('0x', sha3(tld), registrar.address);
     assert.equal(await ens.owner.call(namehash.hash(tld)), registrar.address);
 
     await dnssec.setAlgorithm(253, dummyAlgorithm.address);
@@ -209,7 +209,6 @@ contract('DNSSEC', function(accounts) {
       const dnsprove = new DnsProve(provider);
       const dnsResult = await dnsprove.lookup('TXT', '_ens.matoken.xyz');
       const oracle = await dnsprove.getOracle(address);
-
       // Step 2. Checks that the result is found and is valid.
       assert.equal(dnsResult.found, true);
       assert.equal(
@@ -233,7 +232,7 @@ contract('DNSSEC', function(accounts) {
       var proof = '0x' + proofs[proofs.length - 1].rrdata.toString('hex');
       let name = hexEncodeName('matoken.xyz');
       let tx = await registrar.claim(name, proof, { from: owner, gas:gas });
-      assert.equal(parseInt(tx.receipt.status), 1);
+      assert.equal(tx.receipt.status, true);
       // Step 5. Confirm that the domain is owned by thw DNS record owner.
       let result = await ens.owner.call(namehash.hash('matoken.xyz'));
       assert.equal(result, owner);
@@ -247,7 +246,7 @@ contract('DNSSEC', function(accounts) {
       await oracle.deleteProof('TXT', '_ens.matoken.xyz', lastProof, nsecproofs[nsecproofs.length -2], {from:owner, gas:gas})
       // assert.equal(parseInt(await oracle.knownProof(lastProof)), 0);
       // Step 8. Remove the entry from ENS
-      await registrar.claim(name, '', { from: owner, gas:gas });
+      await registrar.claim(name, '0x', { from: owner, gas:gas });
       assert.equal(parseInt(await ens.owner.call(namehash.hash('matoken.xyz'))), 0);
     });
 
