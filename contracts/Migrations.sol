@@ -1,5 +1,6 @@
 // Need this file so that migration works.
-pragma solidity ^0.4.17;
+pragma solidity ^0.5.0;
+
 contract Migrations {
   address public owner;
   uint public last_completed_migration;
@@ -8,7 +9,7 @@ contract Migrations {
     if (msg.sender == owner) _;
   }
 
-  function Migrations() public {
+  constructor() public {
     owner = msg.sender;
   }
 
