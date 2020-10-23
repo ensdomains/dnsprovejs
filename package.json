@@ -23,6 +23,7 @@
     "ethereumjs-util": "^5.2.0",
     "idempotent-babel-polyfill": "^7.4.4",
     "isomorphic-fetch": "^2.2.1",
+    "underscore": "^1.11.0",
     "web3": "1.0.0-beta.34"
   },
   "devDependencies": {
