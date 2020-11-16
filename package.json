@@ -27,7 +27,7 @@
   "devDependencies": {
     "@ensdomains/dnsregistrar": "^0.3.9",
     "@ensdomains/dnssec-oracle": "^0.1.2",
-    "@ensdomains/ens": "^0.1.1",
+    "@ensdomains/ens": "^0.4.0",
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babelify": "^8.0.0",
