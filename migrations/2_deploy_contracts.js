@@ -13,7 +13,7 @@ var DNSRegistrar      = artifacts.require("@ensdomains/dnsregistrar/DNSRegistrar
 var ENSRegistry       = artifacts.require("@ensdomains/ens/ENSRegistry.sol");
 
 const packet = require('dns-packet');
-const dnsAnchors = require('@ensdomains/dnssec-oracle/lib/anchors.js');
+const dnsAnchors = require('@ensdomains/dnssec-oracle-anchors');
 
 var sha3     = require('web3').utils.sha3;
 var tld = "xyz";
