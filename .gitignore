@@ -1,0 +1,7 @@
+node_modules
+build
+example/dist
+dist
+_build
+_static
+_templates
