@@ -129,6 +129,19 @@ function isTypedArray<T extends packet.Answer['type']>(array: packet.Answer[]): 
     return array.every((a) => a.type == 'DNSKEY');
 }
 
+function makeIndex<T>(values: T[], fn: (value: T)=>number): {[key: number]: T[]} {
+    const ret: {[key: number]: T[]} = {};
+    for(const value of values) {
+        const key = fn(value);
+        let list = ret[key];
+        if(list === undefined) {
+            list = ret[key] = [];
+        }
+        list.push(value);
+    }
+    return ret;
+}
+
 export class DNSProver {
     sendQuery: (q: packet.Packet) => Promise<packet.Packet>;
     digests: {[key: number]: {name: string, f: (data: Buffer, digest: Buffer) => boolean}};
@@ -157,62 +170,40 @@ export class DNSProver {
 
         const sigs = response.answers.filter((r): r is packet.Rrsig => r.type === 'RRSIG' && r.name === qname && r.data.typeCovered === qtype);
         logger.info(`Found ${sigs.length} RRSIGs over ${qtype} RRSET`);
+
+        // If the records are self-signed, verify with DS records
+        if(isTypedArray<'DNSKEY'>(answers) && sigs.some((sig) => sig.name === sig.data.signersName)) {
+            logger.info(`DNSKEY RRSET on ${answers[0].name} is self-signed; attempting to verify with a DS in parent zone`);
+            return this.verifyWithDS(answers, sigs) as any;
+        } else {
+            return this.verifyRRSet(answers, sigs);
+        }
+    }
+
+    async verifyRRSet<T extends packet.Answer>(answers: T[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<T>|null> {
         for(const sig of sigs) {
-            logger.info(`Attempting to verify the ${qtype} RRSET on ${qname} with RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`)
+            logger.info(`Attempting to verify the ${answers[0].type} RRSET on ${answers[0].name} with RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`)
             const ss = new SignedSet(answers, sig);
-            const {proofs, key} = await this.verifyRRSet(ss);
-            if(proofs != null) {
-                logger.info(`RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm].name} verifies the ${qtype} RRSET on ${qname}`);
-                return {
-                    answer: ss,
-                    proofs: proofs
+
+            if(!(sig.data.algorithm in this.algorithms)) {
+                logger.info(`Skipping RRSIG=${sig.data.keyTag}/${sig.data.algorithm} on ${answers[0].type} RRSET for ${answers[0].name}: Unknown algorithm`);
+                continue;
+            }
+
+            const {answer, proofs} = await this.queryWithProof('DNSKEY', sig.data.signersName);
+            for(const key of answer.records) {
+                if(this.verifySignature(ss, key)) {
+                    logger.info(`RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm].name} verifies the ${answers[0].type} RRSET on ${answers[0].name}`);
+                    proofs.push(answer);
+                    return {answer: ss, proofs: proofs};
                 }
-            } else {
-                logger.warn(`Could not verify the ${qtype} RRSET on ${qname} with RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`);
             }
         }
+        logger.warn(`Could not verify the ${answers[0].type} RRSET on ${answers[0].name} with any RRSIGs`);
         return null;
     }
 
-    async verifyRRSet<T extends packet.Answer>(answer: SignedSet<T>): Promise<{proofs: SignedSet<packet.Dnskey|packet.Ds>[], key: packet.Dnskey}> {
-        let proofs: SignedSet<packet.Dnskey|packet.Ds>[];
-        let keys: packet.Dnskey[];
-        if(answer.signature.name == answer.signature.data.signersName && isTypedArray<'DNSKEY'>(answer.records)) {
-            // Self-signed records
-            logger.info(`DNSKEY RRSET on ${answer.signature.name} is self-signed; attempting to verify with a DS in parent zone`);
-            const result = await this.verifyWithDS(answer.records);
-            proofs = result.proofs;
-            keys = result.trustedKeys;
-        } else {
-            const response = await this.queryWithProof('DNSKEY', answer.signature.data.signersName);
-            keys = response.answer.records;
-            proofs = response.proofs;
-            proofs.push(response.answer);
-        }
-
-        for(const key of keys) {
-            if(this.verifySignature(answer, key)) {
-                return {proofs, key};
-            }
-        }
-
-        return {proofs: null, key: null};
-    }
-
-    verifySignature<T extends packet.Answer>(answer: SignedSet<T>, key: packet.Dnskey): boolean {
-        const keyTag = getKeyTag(key);
-        if(key.data.algorithm != answer.signature.data.algorithm || keyTag != answer.signature.data.keyTag || key.name != answer.signature.data.signersName) {
-            return false;
-        }
-        const signatureAlgorithm = this.algorithms[key.data.algorithm];
-        if(signatureAlgorithm === undefined) {
-            logger.warn(`Unrecognised signature algorithm for DNSKEY=${keyTag}/${key.data.algorithm} on ${key.name}`);
-            return false;
-        }
-        return signatureAlgorithm.f(key.data.key, answer.toWire(), answer.signature.data.signature);
-    }
-
-    async verifyWithDS<T extends packet.Answer>(keys: packet.Dnskey[]): Promise<{proofs: SignedSet<packet.Dnskey|packet.Ds>[], trustedKeys: packet.Dnskey[]}> {
+    async verifyWithDS(keys: packet.Dnskey[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<packet.Dnskey>|null> {
         const keyname = keys[0].name;
 
         // Fetch the DS records to use
@@ -228,27 +219,39 @@ export class DNSProver {
         }
 
         // Index the passed in keys by key tag
-        const keysByTag: {[key: number]: packet.Dnskey[]} = {};
-        for(let key of keys) {
-            const keyTag = getKeyTag(key);
-            if(keysByTag[keyTag] === undefined) {
-                keysByTag[keyTag] = [];
-            }
-            keysByTag[keyTag].push(key);
-        }
+        const keysByTag = makeIndex(keys, getKeyTag);
+        const sigsByTag = makeIndex(sigs, (sig) => sig.data.keyTag);
 
-        // Iterate over the DS records looking for keys we can add to the chain of trust
-        const trustedKeys: packet.Dnskey[] = [];
+        // Iterate over the DS records looking for keys we can verify
         for(let ds of answer) {
             for(let key of keysByTag[ds.data.keyTag]) {
-                if(this.checkDs(ds, key) && !trustedKeys.includes(key)) {
+                if(this.checkDs(ds, key)) {
                     logger.info(`DS=${ds.data.keyTag}/${this.algorithms[ds.data.algorithm].name}/${this.digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${this.algorithms[key.data.algorithm].name} on ${key.name}`);
-                    trustedKeys.push(key);
+                    for(let sig of sigsByTag[ds.data.keyTag]) {
+                        const ss = new SignedSet(keys, sig);
+                        if(this.verifySignature(ss, key)) {
+                            logger.info(`RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm].name} verifies the DNSKEY RRSET on ${keys[0].name}`);
+                            return {answer: ss, proofs: proofs};
+                        }
+                    }
                 }
             }
         }
 
-        return { proofs, trustedKeys };
+        return null;
+    }
+
+    verifySignature<T extends packet.Answer>(answer: SignedSet<T>, key: packet.Dnskey): boolean {
+        const keyTag = getKeyTag(key);
+        if(key.data.algorithm != answer.signature.data.algorithm || keyTag != answer.signature.data.keyTag || key.name != answer.signature.data.signersName) {
+            return false;
+        }
+        const signatureAlgorithm = this.algorithms[key.data.algorithm];
+        if(signatureAlgorithm === undefined) {
+            logger.warn(`Unrecognised signature algorithm for DNSKEY=${keyTag}/${key.data.algorithm} on ${key.name}`);
+            return false;
+        }
+        return signatureAlgorithm.f(key.data.key, answer.toWire(), answer.signature.data.signature);
     }
 
     checkDs(ds: packet.Ds, key: packet.Dnskey): boolean {
