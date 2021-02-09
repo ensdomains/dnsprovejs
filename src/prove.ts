@@ -160,6 +160,21 @@ export class DNSProver {
     }
 
     async queryWithProof<T extends packet.Answer['type']>(qtype: T, qname: string): Promise<ProvableAnswer<Extract<packet.Answer,{type: T}>|null>> {
+        return (new DNSQuery(this)).queryWithProof(qtype, qname);
+    }
+}
+
+type AnswerSet = {[T in packet.Answer['type']]: ProvableAnswer<Extract<packet.Answer, {type: T}>>};
+
+class DNSQuery {
+    prover: DNSProver;
+    cache: {[key: string]: {[key: string]: packet.Packet}} = {};
+
+    constructor(prover: DNSProver) {
+        this.prover = prover;
+    }
+
+    async queryWithProof<T extends packet.Answer['type']>(qtype: T, qname: string): Promise<ProvableAnswer<Extract<packet.Answer,{type: T}>|null>> {
         const response = await this.dnsQuery(qtype.toString(), qname);
         const answers = response.answers.filter(
             (r): r is Extract<packet.Answer,{type: T}> => r.type === qtype && r.name === qname);
@@ -182,10 +197,11 @@ export class DNSProver {
 
     async verifyRRSet<T extends packet.Answer>(answers: T[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<T>|null> {
         for(const sig of sigs) {
-            logger.info(`Attempting to verify the ${answers[0].type} RRSET on ${answers[0].name} with RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`)
+            const algorithms = this.prover.algorithms;
+            logger.info(`Attempting to verify the ${answers[0].type} RRSET on ${answers[0].name} with RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`)
             const ss = new SignedSet(answers, sig);
 
-            if(!(sig.data.algorithm in this.algorithms)) {
+            if(!(sig.data.algorithm in algorithms)) {
                 logger.info(`Skipping RRSIG=${sig.data.keyTag}/${sig.data.algorithm} on ${answers[0].type} RRSET for ${answers[0].name}: Unknown algorithm`);
                 continue;
             }
@@ -193,7 +209,7 @@ export class DNSProver {
             const {answer, proofs} = await this.queryWithProof('DNSKEY', sig.data.signersName);
             for(const key of answer.records) {
                 if(this.verifySignature(ss, key)) {
-                    logger.info(`RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm].name} verifies the ${answers[0].type} RRSET on ${answers[0].name}`);
+                    logger.info(`RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm].name} verifies the ${answers[0].type} RRSET on ${answers[0].name}`);
                     proofs.push(answer);
                     return {answer: ss, proofs: proofs};
                 }
@@ -210,7 +226,7 @@ export class DNSProver {
         let answer: packet.Ds[];
         let proofs: SignedSet<packet.Dnskey|packet.Ds>[];
         if(keyname === '.') {
-            [answer, proofs] = [this.anchors, []];
+            [answer, proofs] = [this.prover.anchors, []];
         } else {
             const response = await this.queryWithProof('DS', keyname);
             answer = response.answer.records;
@@ -223,14 +239,16 @@ export class DNSProver {
         const sigsByTag = makeIndex(sigs, (sig) => sig.data.keyTag);
 
         // Iterate over the DS records looking for keys we can verify
+        const algorithms = this.prover.algorithms;
+        const digests = this.prover.digests;
         for(let ds of answer) {
             for(let key of keysByTag[ds.data.keyTag]) {
                 if(this.checkDs(ds, key)) {
-                    logger.info(`DS=${ds.data.keyTag}/${this.algorithms[ds.data.algorithm].name}/${this.digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${this.algorithms[key.data.algorithm].name} on ${key.name}`);
+                    logger.info(`DS=${ds.data.keyTag}/${algorithms[ds.data.algorithm].name}/${digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${algorithms[key.data.algorithm].name} on ${key.name}`);
                     for(let sig of sigsByTag[ds.data.keyTag]) {
                         const ss = new SignedSet(keys, sig);
                         if(this.verifySignature(ss, key)) {
-                            logger.info(`RRSIG=${sig.data.keyTag}/${this.algorithms[sig.data.algorithm].name} verifies the DNSKEY RRSET on ${keys[0].name}`);
+                            logger.info(`RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm].name} verifies the DNSKEY RRSET on ${keys[0].name}`);
                             return {answer: ss, proofs: proofs};
                         }
                     }
@@ -246,7 +264,7 @@ export class DNSProver {
         if(key.data.algorithm != answer.signature.data.algorithm || keyTag != answer.signature.data.keyTag || key.name != answer.signature.data.signersName) {
             return false;
         }
-        const signatureAlgorithm = this.algorithms[key.data.algorithm];
+        const signatureAlgorithm = this.prover.algorithms[key.data.algorithm];
         if(signatureAlgorithm === undefined) {
             logger.warn(`Unrecognised signature algorithm for DNSKEY=${keyTag}/${key.data.algorithm} on ${key.name}`);
             return false;
@@ -262,7 +280,7 @@ export class DNSProver {
             packet.name.encode(ds.name),
             packet.dnskey.encode(key.data).slice(2)
         ]);
-        const digestAlgorithm = this.digests[ds.data.digestType];
+        const digestAlgorithm = this.prover.digests[ds.data.digestType];
         if(digestAlgorithm === undefined) {
             logger.warn(`Unrecognised digest type for DS=${ds.data.keyTag}/${ds.data.digestType} on ${ds.name}`)
             return false;
@@ -293,7 +311,13 @@ export class DNSProver {
             ],
             answers: [],
         };
-        const response = await this.sendQuery(query);
+        if(this.cache[qname]?.[qtype] === undefined) {
+            if(this.cache[qname] === undefined) {
+                this.cache[qname] = {};
+            }
+            this.cache[qname][qtype] = await this.prover.sendQuery(query);
+        }
+        const response = this.cache[qname][qtype];
         logger.info(`Query[${qname} ${qtype}]:\n` + answersToString(response.answers));
         if(response.rcode !== 'NOERROR') {
             throw new ResponseCodeError(query, response);
