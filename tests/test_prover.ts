@@ -2,6 +2,7 @@ import * as packet from 'dns-packet';
 import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag } from '../src/prove';
 import { expect } from 'chai';
 import {logger} from '../src/log';
+import { keccak256 } from 'ethereumjs-util';
 
 
 function makeProver(responses: {[qname: string]: {[qtype: string]: packet.Packet[]}}, rootKey: packet.Dnskey) {
@@ -62,19 +63,22 @@ function makeSignedResponse(a: packet.Answer[], keys: packet.Dnskey[]): packet.P
     };
 }
 
+let randomdata = Buffer.of();
 function makeKey(name: string): packet.Dnskey {
+    randomdata = keccak256(randomdata);
     return {
         name: name,
         type: 'DNSKEY',
         data: {
             flags: 256, // ZSK
             algorithm: 253,
-            key: Buffer.from(name),
+            key: randomdata,
         }
     };
 }
 
 function makeDs(signedKey: packet.Dnskey): packet.Ds {
+    randomdata = keccak256(randomdata);
     return {
         name: signedKey.name,
         type: 'DS',
@@ -82,7 +86,7 @@ function makeDs(signedKey: packet.Dnskey): packet.Ds {
             keyTag: getKeyTag(signedKey),
             algorithm: signedKey.data.algorithm,
             digestType: 253,
-            digest: Buffer.from(signedKey.name),
+            digest: randomdata,
         }
     };
 }
@@ -187,11 +191,30 @@ describe('dnsprovejs', () => {
 
     });
 
-    it('requires that the DNSKEY be in the chain of trust', async () => {
+    it.only('requires that the DNSKEY be in the chain of trust', async () => {
         // In the situation that a self-signed DNSKEY RRSET has multiple keys and
         // multiple signatures, but only one of those keys has a DS record in the
         // parent zone, we should only accept the signature with the DNSKEY that
         // is validated by the DS record. This test checks that situation. 
+        const now = Date.now() / 1000;
+        // Create a root key and two TLD keys
+        const rootKey = makeKey('.');
+        const tldKey = makeKey('tld.');
+        const tldKey2 = makeKey('tld.');
+
+        const prover = makeProver({
+            'tld.': {
+                // DNSKEY RRSet is signed only with tldKey
+                'DNSKEY': makeSignedResponse([tldKey, tldKey2], [tldKey]),
+                // DS RRSet hashes only tldKey2 - no chain of trust
+                'DS': makeDsResponse(tldKey2, [rootKey]),
+            },
+            '.': {
+                'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
+            },
+        }, rootKey);
+        const result = await prover.queryWithProof('DNSKEY', 'tld.');
+        expect(result).to.be.null;
     });
 
     it('rejects expired RRSIGs', async () => {
