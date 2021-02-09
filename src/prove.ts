@@ -1,8 +1,38 @@
 import * as packet from 'dns-packet'
 import {sha256} from 'ethereumjs-util'
 import {logger} from './log'
+import fetch from 'node-fetch';
 
-export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [];
+export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [
+    {
+        name: '.',
+        type: 'DS',
+        class: 'IN',
+        data: {
+          keyTag: 19036,
+          algorithm: 8,
+          digestType: 2,
+          digest: Buffer.from(
+            '49AAC11D7B6F6446702E54A1607371607A1A41855200FD2CE1CDDE32F24E8FB5',
+            'hex'
+          )
+        }
+      },
+      {
+        name: '.',
+        type: 'DS',
+        class: 'IN',
+        data: {
+          keyTag: 20326,
+          algorithm: 8,
+          digestType: 2,
+          digest: Buffer.from(
+            'E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D',
+            'hex'
+          )
+        }
+      },
+];
 
 function encodeURLParams(p: {[key:string]:string}): string {
     return Object.entries(p).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
@@ -47,7 +77,7 @@ export function answersToString(a: packet.Answer[]): string {
     return s.join('\n');
 }
 
-function getDNS(url: string) {
+export function dohQuery(url: string) {
     return async function getDNS(q: packet.Packet): Promise<packet.Packet> {
         const buf = packet.encode(q);
         const response = await fetch(url + "?" + encodeURLParams({
@@ -59,7 +89,7 @@ function getDNS(url: string) {
     }
 }
 
-class SignedSet<T extends packet.Answer> {
+export class SignedSet<T extends packet.Answer> {
     records: T[];
     signature: packet.Rrsig;
 
@@ -81,7 +111,7 @@ class SignedSet<T extends packet.Answer> {
     }
 }
 
-interface ProvableAnswer<T extends packet.Answer> {
+export interface ProvableAnswer<T extends packet.Answer> {
     answer: SignedSet<T>;
     proofs: SignedSet<packet.Dnskey|packet.Ds>[];
 }
@@ -106,8 +136,9 @@ export class ResponseCodeError extends DNSError {
 }
 
 export const DEFAULT_DIGESTS = {
+
     // SHA256
-    8: {
+    2: {
         name: 'SHA256',
         f: (data: Buffer, digest: Buffer) => {
             return sha256(data).equals(digest);
@@ -149,7 +180,7 @@ export class DNSProver {
     anchors: packet.Ds[];
 
     static create(url: string) {
-        return new DNSProver(getDNS(url));
+        return new DNSProver(dohQuery(url));
     }
 
     constructor(sendQuery: (q: packet.Packet) => Promise<packet.Packet>, digests = DEFAULT_DIGESTS, algorithms = DEFAULT_ALGORITHMS, anchors = DEFAULT_TRUST_ANCHORS) {
@@ -206,7 +237,11 @@ class DNSQuery {
                 continue;
             }
 
-            const {answer, proofs} = await this.queryWithProof('DNSKEY', sig.data.signersName);
+            const result = await this.queryWithProof('DNSKEY', sig.data.signersName);
+            if(result === null) {
+                return null;
+            }
+            const {answer, proofs} = result;
             for(const key of answer.records) {
                 if(this.verifySignature(ss, key)) {
                     logger.info(`RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm].name} verifies the ${answers[0].type} RRSET on ${answers[0].name}`);
@@ -229,6 +264,9 @@ class DNSQuery {
             [answer, proofs] = [this.prover.anchors, []];
         } else {
             const response = await this.queryWithProof('DS', keyname);
+            if(response === null) {
+                return null;
+            }
             answer = response.answer.records;
             proofs = response.proofs;
             proofs.push(response.answer);
@@ -242,10 +280,10 @@ class DNSQuery {
         const algorithms = this.prover.algorithms;
         const digests = this.prover.digests;
         for(let ds of answer) {
-            for(let key of keysByTag[ds.data.keyTag]) {
+            for(let key of keysByTag[ds.data.keyTag] || []) {
                 if(this.checkDs(ds, key)) {
                     logger.info(`DS=${ds.data.keyTag}/${algorithms[ds.data.algorithm].name}/${digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${algorithms[key.data.algorithm].name} on ${key.name}`);
-                    for(let sig of sigsByTag[ds.data.keyTag]) {
+                    for(let sig of sigsByTag[ds.data.keyTag] || []) {
                         const ss = new SignedSet(keys, sig);
                         if(this.verifySignature(ss, key)) {
                             logger.info(`RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm].name} verifies the DNSKEY RRSET on ${keys[0].name}`);
@@ -256,6 +294,7 @@ class DNSQuery {
             }
         }
 
+        logger.warn(`Could not find any DS records to verify the DNSKEY RRSET on ${keys[0].name}`);
         return null;
     }
 
@@ -282,7 +321,7 @@ class DNSQuery {
         ]);
         const digestAlgorithm = this.prover.digests[ds.data.digestType];
         if(digestAlgorithm === undefined) {
-            logger.warn(`Unrecognised digest type for DS=${ds.data.keyTag}/${ds.data.digestType} on ${ds.name}`)
+            logger.warn(`Unrecognised digest type for DS=${ds.data.keyTag}/${ds.data.digestType}/${this.prover.algorithms[ds.data.algorithm]?.name || ds.data.algorithm} on ${ds.name}`)
             return false;
         }
         return digestAlgorithm.f(data, ds.data.digest);

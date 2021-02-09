@@ -1,6 +1,8 @@
 import * as packet from 'dns-packet';
-import { DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag } from '../src/prove';
+import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag } from '../src/prove';
 import { expect } from 'chai';
+import {logger} from '../src/log';
+
 
 function makeProver(responses: {[qname: string]: {[qtype: string]: packet.Packet[]}}, rootKey: packet.Dnskey) {
     const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {

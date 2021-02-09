@@ -5,8 +5,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@types/node-fetch": "^2.5.8",
     "dns-packet": "^5.2.1",
     "ethereumjs-util": "^7.0.7",
+    "node-fetch": "^2.6.1",
     "typescript-logging": "^1.0.0"
   },
   "devDependencies": {
