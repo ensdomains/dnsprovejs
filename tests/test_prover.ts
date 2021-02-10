@@ -1,9 +1,12 @@
 import * as packet from 'dns-packet';
-import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag } from '../src/prove';
+import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag, NoValidDsError, NoValidDnskeyError } from '../src/prove';
+import * as chai from 'chai';
 import { expect } from 'chai';
+import * as chaiAsPromised from 'chai-as-promised';
 import {logger} from '../src/log';
 import { keccak256 } from 'ethereumjs-util';
 
+chai.use(chaiAsPromised);
 
 function makeProver(responses: {[qname: string]: {[qtype: string]: packet.Packet[]}}, rootKey: packet.Dnskey) {
     const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {
@@ -97,7 +100,6 @@ function makeDsResponse(signedKey: packet.Dnskey, signingKeys: packet.Dnskey[]):
 
 describe('dnsprovejs', () => {
     it('correctly constructs a set of proofs', async () => {
-        const now = Date.now() / 1000;
         const rootKey = makeKey('.');
         const tldKey = makeKey('tld.');
         const testKey = makeKey('test.tld.');
@@ -169,7 +171,6 @@ describe('dnsprovejs', () => {
     });
 
     it('ignores RRSIGs with unknown algorithms', async () => {
-        const now = Date.now() / 1000;
         const rootKey = makeKey('.');
         const alternateRootKey = makeKey('.');
         alternateRootKey.data.algorithm = 252;
@@ -188,15 +189,96 @@ describe('dnsprovejs', () => {
     });
 
     it('ignores DSes with unknown digest types', async () => {
+        const rootKey = makeKey('.');
+        const tldKey = makeKey('tld.');
+        const ds1 = makeDs(tldKey);
+        const ds2 = makeDs(tldKey);
+        ds1.data.algorithm = 252;
 
+        const prover = makeProver({
+            'tld.': {
+                'DNSKEY': makeSignedResponse([tldKey], [tldKey]),
+                'DS': makeSignedResponse([ds1, ds2], [rootKey]),
+            },
+            '.': {
+                'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
+            },
+        }, rootKey);
+        const result = await prover.queryWithProof('DNSKEY', 'tld.');
+        expect(result).to.deep.nested.include({
+            'answer.records.length': 1,
+            'proofs.length': 2,
+        });
     });
 
-    it.only('requires that the DNSKEY be in the chain of trust', async () => {
+    it('throws an exception if no valid DS records are found', async () => {
+        const rootKey = makeKey('.');
+        const tldKey = makeKey('tld.');
+        const ds1 = makeDs(tldKey);
+        ds1.data.algorithm = 252;
+
+        const prover = makeProver({
+            'tld.': {
+                'DNSKEY': makeSignedResponse([tldKey], [tldKey]),
+                'DS': makeSignedResponse([ds1], [rootKey]),
+            },
+            '.': {
+                'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
+            },
+        }, rootKey);
+        await expect(prover.queryWithProof('DNSKEY', 'tld.')).to.be.rejectedWith(NoValidDsError);
+    });
+
+    it('throws an exception if no valid DNSKEY records are found', async () => {
+        const rootKey = makeKey('.');
+        const tldKey = makeKey('tld.');
+        tldKey.data.algorithm = 252;
+
+        const prover = makeProver({
+            'test.tld.': {
+                'TXT': makeSignedResponse([
+                    {
+                        name: 'test.tld.',
+                        type: 'TXT',
+                        data: [Buffer.from('test')],
+                    }
+                ], [tldKey]),
+            },
+            'tld.': {
+                'DNSKEY': makeSignedResponse([tldKey], [tldKey]),
+                'DS': makeDsResponse(tldKey, [rootKey]),
+            },
+            '.': {
+                'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
+            },
+        }, rootKey);
+        await expect(prover.queryWithProof('TXT', 'test.tld.')).to.be.rejectedWith(NoValidDnskeyError);
+    });
+
+    it('throws an exception if no valid self-signed DNSKEY records are found', async () => {
+        const rootKey = makeKey('.');
+        const tldKey = makeKey('tld.');
+        tldKey.data.algorithm = 252;
+
+        const prover = makeProver({
+            'tld.': {
+                'DNSKEY': makeSignedResponse([tldKey], [tldKey]),
+                'DS': makeDsResponse(tldKey, [rootKey]),
+            },
+            '.': {
+                'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
+            },
+        }, rootKey);
+        await expect(prover.queryWithProof('DNSKEY', 'tld.')).to.be.rejectedWith(NoValidDsError);
+    });
+
+
+    it('requires that the DNSKEY be in the chain of trust', async () => {
         // In the situation that a self-signed DNSKEY RRSET has multiple keys and
         // multiple signatures, but only one of those keys has a DS record in the
         // parent zone, we should only accept the signature with the DNSKEY that
         // is validated by the DS record. This test checks that situation. 
-        const now = Date.now() / 1000;
+
         // Create a root key and two TLD keys
         const rootKey = makeKey('.');
         const tldKey = makeKey('tld.');
@@ -213,19 +295,6 @@ describe('dnsprovejs', () => {
                 'DNSKEY': makeSignedResponse([rootKey], [rootKey]),
             },
         }, rootKey);
-        const result = await prover.queryWithProof('DNSKEY', 'tld.');
-        expect(result).to.be.null;
-    });
-
-    it('rejects expired RRSIGs', async () => {
-
-    });
-
-    it('rejects not-yet-valid RRSIGs', async () => {
-
-    });
-
-    it('correctly validates a real chain of records', async () => {
-
+        await expect(prover.queryWithProof('DNSKEY', 'tld.')).to.be.rejectedWith(NoValidDsError);
     });
 });

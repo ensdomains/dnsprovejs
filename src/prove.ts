@@ -135,6 +135,28 @@ export class ResponseCodeError extends DNSError {
     }
 }
 
+export class ChainOfTrustError extends DNSError { }
+
+export class NoValidDsError extends ChainOfTrustError {
+    keys: packet.Dnskey[];
+
+    constructor(keys: packet.Dnskey[]) {
+        super(`Could not find a DS record to validate any RRSIG on DNSKEY records for ${keys[0].name}`);
+        this.keys = keys;
+        this.name = 'NoValidDsError';
+    }
+}
+
+export class NoValidDnskeyError<T extends packet.Answer> extends ChainOfTrustError {
+    result: T[];
+
+    constructor(result: T[]) {
+        super(`Could not find a DNSKEY record to validate any RRSIG on ${result[0].type} records for ${result[0].name}`)
+        this.result = result;
+        this.name = 'NoValidDnskeyError';
+    }
+}
+
 export const DEFAULT_DIGESTS = {
 
     // SHA256
@@ -226,7 +248,7 @@ class DNSQuery {
         }
     }
 
-    async verifyRRSet<T extends packet.Answer>(answers: T[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<T>|null> {
+    async verifyRRSet<T extends packet.Answer>(answers: T[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<T>> {
         for(const sig of sigs) {
             const algorithms = this.prover.algorithms;
             logger.info(`Attempting to verify the ${answers[0].type} RRSET on ${answers[0].name} with RRSIG=${sig.data.keyTag}/${algorithms[sig.data.algorithm]?.name || sig.data.algorithm}`)
@@ -239,7 +261,7 @@ class DNSQuery {
 
             const result = await this.queryWithProof('DNSKEY', sig.data.signersName);
             if(result === null) {
-                return null;
+                throw new NoValidDnskeyError(answers);
             }
             const {answer, proofs} = result;
             for(const key of answer.records) {
@@ -251,10 +273,10 @@ class DNSQuery {
             }
         }
         logger.warn(`Could not verify the ${answers[0].type} RRSET on ${answers[0].name} with any RRSIGs`);
-        return null;
+        throw new NoValidDnskeyError(answers);
     }
 
-    async verifyWithDS(keys: packet.Dnskey[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<packet.Dnskey>|null> {
+    async verifyWithDS(keys: packet.Dnskey[], sigs: packet.Rrsig[]): Promise<ProvableAnswer<packet.Dnskey>> {
         const keyname = keys[0].name;
 
         // Fetch the DS records to use
@@ -265,7 +287,7 @@ class DNSQuery {
         } else {
             const response = await this.queryWithProof('DS', keyname);
             if(response === null) {
-                return null;
+                throw new NoValidDsError(keys);
             }
             answer = response.answer.records;
             proofs = response.proofs;
@@ -282,7 +304,7 @@ class DNSQuery {
         for(let ds of answer) {
             for(let key of keysByTag[ds.data.keyTag] || []) {
                 if(this.checkDs(ds, key)) {
-                    logger.info(`DS=${ds.data.keyTag}/${algorithms[ds.data.algorithm].name}/${digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${algorithms[key.data.algorithm].name} on ${key.name}`);
+                    logger.info(`DS=${ds.data.keyTag}/${algorithms[ds.data.algorithm]?.name || ds.data.algorithm}/${digests[ds.data.digestType].name} verifies DNSKEY=${ds.data.keyTag}/${algorithms[key.data.algorithm]?.name || key.data.algorithm} on ${key.name}`);
                     for(let sig of sigsByTag[ds.data.keyTag] || []) {
                         const ss = new SignedSet(keys, sig);
                         if(this.verifySignature(ss, key)) {
@@ -295,7 +317,7 @@ class DNSQuery {
         }
 
         logger.warn(`Could not find any DS records to verify the DNSKEY RRSET on ${keys[0].name}`);
-        return null;
+        throw new NoValidDsError(keys);
     }
 
     verifySignature<T extends packet.Answer>(answer: SignedSet<T>, key: packet.Dnskey): boolean {
