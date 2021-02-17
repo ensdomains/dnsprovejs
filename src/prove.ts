@@ -98,8 +98,7 @@ export class SignedSet<T extends packet.Answer> {
         this.signature = signature;
     }
 
-    toWire(): Buffer {
-        let rrsig = packet.rrsig.encode(Object.assign({}, this.signature.data, { signature: Buffer.of()}));
+    toWire(withRrsig: boolean = true): Buffer {
         let rrset = Buffer.concat(this.records
             // https://tools.ietf.org/html/rfc4034#section-6
             .map(r => packet.answer.encode(Object.assign(r, {
@@ -107,7 +106,16 @@ export class SignedSet<T extends packet.Answer> {
                 ttl: this.signature.data.originalTTL // (5)
             })))
             .sort((a, b) => a.compare(b)));
-        return Buffer.concat([rrsig, rrset]);
+        if(withRrsig) {
+            let rrsig = packet.rrsig.encode(Object.assign({}, this.signature.data, { signature: Buffer.of()}));
+            return Buffer.concat([rrsig, rrset]);
+        } else {
+            return rrset;
+        }
+    }
+
+    signatureData(): Buffer {
+        return packet.rrsig.encode(this.signature.data).slice(2);
     }
 }
 
@@ -116,14 +124,7 @@ export interface ProvableAnswer<T extends packet.Answer> {
     proofs: SignedSet<packet.Dnskey|packet.Ds>[];
 }
 
-export class DNSError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'DNSError';
-    }
-}
-
-export class ResponseCodeError extends DNSError {
+export class ResponseCodeError extends Error {
     query: packet.Packet;
     response: packet.Packet;
 
@@ -135,9 +136,7 @@ export class ResponseCodeError extends DNSError {
     }
 }
 
-export class ChainOfTrustError extends DNSError { }
-
-export class NoValidDsError extends ChainOfTrustError {
+export class NoValidDsError extends Error {
     keys: packet.Dnskey[];
 
     constructor(keys: packet.Dnskey[]) {
@@ -147,7 +146,7 @@ export class NoValidDsError extends ChainOfTrustError {
     }
 }
 
-export class NoValidDnskeyError<T extends packet.Answer> extends ChainOfTrustError {
+export class NoValidDnskeyError<T extends packet.Answer> extends Error {
     result: T[];
 
     constructor(result: T[]) {
