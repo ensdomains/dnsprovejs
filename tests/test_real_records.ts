@@ -80,5 +80,5 @@ describe('dnsprovejs', () => {
             'answer.signature.name': '_ens.matoken.live',
             'proofs.length': 5,
         });
-    })
+    });
 });

@@ -1,4 +1,5 @@
 import * as packet from 'dns-packet'
+import * as packet_types from 'dns-packet/types'
 import {sha256} from 'ethereumjs-util'
 import {logger} from './log'
 import fetch from 'node-fetch';
@@ -98,6 +99,40 @@ export class SignedSet<T extends packet.Answer> {
         this.signature = signature;
     }
 
+    static fromWire<T extends packet.Answer>(data: Buffer, signatureData: Buffer): SignedSet<T> {
+        const rdata = this.readRrsigRdata(data);
+        rdata.signature = signatureData;
+
+        const rrs = [];
+        let off = packet.rrsig.decode.bytes;
+        while(off < data.length) {
+            rrs.push(packet.answer.decode(data, off));
+            off += packet.answer.decode.bytes;
+        }
+
+        return new SignedSet<T>(rrs, {
+            name: rrs[0].name,
+            type: 'RRSIG',
+            class: rrs[0].class,
+            data: rdata
+        });
+    }
+
+    private static readRrsigRdata(data: Buffer): packet.Rrsig['data'] {
+        let offset = 0;
+        return {
+            typeCovered: packet_types.toString(data.readUInt16BE(0)),
+            algorithm: data.readUInt8(2),
+            labels: data.readUInt8(3),
+            originalTTL: data.readUInt32BE(4),
+            expiration: data.readUInt32BE(8),
+            inception: data.readUInt32BE(12),
+            keyTag: data.readUInt16BE(16),
+            signersName: packet.name.decode(data, 18),
+            signature: Buffer.of(),
+        };
+    }
+
     toWire(withRrsig: boolean = true): Buffer {
         let rrset = Buffer.concat(this.records
             // https://tools.ietf.org/html/rfc4034#section-6
@@ -107,15 +142,11 @@ export class SignedSet<T extends packet.Answer> {
             })))
             .sort((a, b) => a.compare(b)));
         if(withRrsig) {
-            let rrsig = packet.rrsig.encode(Object.assign({}, this.signature.data, { signature: Buffer.of()}));
+            let rrsig = packet.rrsig.encode(Object.assign({}, this.signature.data, { signature: Buffer.of()})).slice(2);
             return Buffer.concat([rrsig, rrset]);
         } else {
             return rrset;
         }
-    }
-
-    signatureData(): Buffer {
-        return packet.rrsig.encode(this.signature.data).slice(2);
     }
 }
 
