@@ -225,6 +225,37 @@ function makeIndex<T>(values: T[], fn: (value: T)=>number): {[key: number]: T[]}
     return ret;
 }
 
+export async function getQueryData<T extends packet.Answer['type']>(qtype: T, qname: string) {
+    const queries:any = {};
+    const sendQuery = dohQuery("https://cloudflare-dns.com/dns-query");
+    const prover = new DNSProver(async (q: packet.Packet) => {
+        const a = await sendQuery(q);
+        if(queries[q.questions[0].name] === undefined) {
+            queries[q.questions[0].name] = {};
+        }
+        queries[q.questions[0].name][q.questions[0].type] = packet.encode(a).toString('hex');
+        return a;
+    });
+    const result = await prover.queryWithProof(qtype, qname);
+    return {result, queries};
+}
+
+export function makeProver(responses: {[qname: string]: {[qtype: string]: string}}) {
+    const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {
+        if(q.questions.length !== 1) {
+            throw new Error("Queries must have exactly one question"); 
+        };
+        const question = q.questions[0];
+        const response = responses[question.name]?.[question.type];
+        if(response === undefined) {
+            debugger
+            throw new Error("Unexpected query for " + question.name + " " + question.type);
+        }
+        return Promise.resolve(Object.assign(packet.decode(Buffer.from(response, 'hex')), {questions: q.questions, id: q.id}));
+    };
+    return new DNSProver(sendQuery);
+}
+
 export class DNSProver {
     sendQuery: (q: packet.Packet) => Promise<packet.Packet>;
     digests: {[key: number]: {name: string, f: (data: Buffer, digest: Buffer) => boolean}};
