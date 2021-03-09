@@ -1,6 +1,38 @@
 import * as packet from 'dns-packet';
-import { dohQuery, getKeyTag, ProvableAnswer, DNSProver } from '../src/prove';
+import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag, ProvableAnswer, SignedSet } from '../src/prove';
 import { expect } from 'chai';
+import {logger} from '../src/log';
+
+
+function makeProver(responses: {[qname: string]: {[qtype: string]: string}}) {
+    const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {
+        if(q.questions.length !== 1) {
+            throw new Error("Queries must have exactly one question"); 
+        };
+        const question = q.questions[0];
+        const response = responses[question.name]?.[question.type];
+        if(response === undefined) {
+            throw new Error("Unexpected query for " + question.name + " " + question.type);
+        }
+        return Promise.resolve(Object.assign(packet.decode(Buffer.from(response, 'hex')), {questions: q.questions, id: q.id}));
+    };
+    return new DNSProver(sendQuery);
+}
+
+async function getQueryData(qtype: string, qname: string) {
+    const queries:any = {};
+    const sendQuery = dohQuery("https://cloudflare-dns.com/dns-query");
+    const prover = new DNSProver(async (q: packet.Packet) => {
+        const a = await sendQuery(q);
+        if(queries[q.questions[0].name] === undefined) {
+            queries[q.questions[0].name] = {};
+        }
+        queries[q.questions[0].name][q.questions[0].type] = packet.encode(a).toString('hex');
+        return a;
+    });
+    const result = await prover.queryWithProof('TXT', '_ens.matoken.live');
+    return {result, queries};
+}
 
 // Validates the chain of trust by checking for matching key tags.
 function checkKeyTags(result: ProvableAnswer<any>) {
@@ -19,38 +51,6 @@ function checkKeyTags(result: ProvableAnswer<any>) {
         last = proof;
     }
 }
-
-async function getQueryData<T extends packet.Answer['type']>(qtype: T, qname: string) {
-    const queries:any = {};
-    const sendQuery = dohQuery("https://cloudflare-dns.com/dns-query");
-    const prover = new DNSProver(async (q: packet.Packet) => {
-        const a = await sendQuery(q);
-        if(queries[q.questions[0].name] === undefined) {
-            queries[q.questions[0].name] = {};
-        }
-        queries[q.questions[0].name][q.questions[0].type] = packet.encode(a).toString('hex');
-        return a;
-    });
-    const result = await prover.queryWithProof(qtype, qname);
-    return {result, queries};
-}
-
-function makeProver(responses: {[qname: string]: {[qtype: string]: string}}) {
-    const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {
-        if(q.questions.length !== 1) {
-            throw new Error("Queries must have exactly one question"); 
-        };
-        const question = q.questions[0];
-        const response = responses[question.name]?.[question.type];
-        if(response === undefined) {
-            debugger
-            throw new Error("Unexpected query for " + question.name + " " + question.type);
-        }
-        return Promise.resolve(Object.assign(packet.decode(Buffer.from(response, 'hex')), {questions: q.questions, id: q.id}));
-    };
-    return new DNSProver(sendQuery);
-}
-
 
 describe('dnsprovejs', () => {
     it('queries TXT _ens.matoken.live correctly', async () => {
