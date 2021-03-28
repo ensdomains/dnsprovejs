@@ -1,6 +1,6 @@
 {
   "name": "@ensdomains/dnsprovejs",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A library to generate chains of trust proving DNS records via DNSSEC",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
