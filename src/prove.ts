@@ -199,9 +199,14 @@ export const DEFAULT_DIGESTS = {
 };
 
 export const DEFAULT_ALGORITHMS = {
-    // RSASHA256
     8: {
         name: 'RSASHA256',
+        f: (key: Buffer, data: Buffer, sig: Buffer) => {
+            return true;
+        },
+    },
+    13: {
+        name: 'P256SHA256',
         f: (key: Buffer, data: Buffer, sig: Buffer) => {
             return true;
         },
