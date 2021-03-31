@@ -100,11 +100,11 @@ export class SignedSet<T extends packet.Answer> {
     }
 
     static fromWire<T extends packet.Answer>(data: Buffer, signatureData: Buffer): SignedSet<T> {
-        const rdata = this.readRrsigRdata(data);
+        const {rdata, length} = this.readRrsigRdata(data);
         rdata.signature = signatureData;
 
         const rrs = [];
-        let off = packet.rrsig.decode.bytes;
+        let off = length;
         while(off < data.length) {
             rrs.push(packet.answer.decode(data, off));
             off += packet.answer.decode.bytes;
@@ -118,18 +118,21 @@ export class SignedSet<T extends packet.Answer> {
         });
     }
 
-    private static readRrsigRdata(data: Buffer): packet.Rrsig['data'] {
+    private static readRrsigRdata(data: Buffer): {rdata: packet.Rrsig['data'], length: number} {
         let offset = 0;
         return {
-            typeCovered: packet_types.toString(data.readUInt16BE(0)),
-            algorithm: data.readUInt8(2),
-            labels: data.readUInt8(3),
-            originalTTL: data.readUInt32BE(4),
-            expiration: data.readUInt32BE(8),
-            inception: data.readUInt32BE(12),
-            keyTag: data.readUInt16BE(16),
-            signersName: packet.name.decode(data, 18),
-            signature: Buffer.of(),
+            rdata: {
+                typeCovered: packet_types.toString(data.readUInt16BE(0)),
+                algorithm: data.readUInt8(2),
+                labels: data.readUInt8(3),
+                originalTTL: data.readUInt32BE(4),
+                expiration: data.readUInt32BE(8),
+                inception: data.readUInt32BE(12),
+                keyTag: data.readUInt16BE(16),
+                signersName: packet.name.decode(data, 18),
+                signature: Buffer.of(),
+            },
+            length: 18 + packet.name.decode.bytes,
         };
     }
 
