@@ -1,24 +1,24 @@
 import * as packet from 'dns-packet';
-import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag, NoValidDsError, NoValidDnskeyError } from '../src/prove';
+import { dohQuery, DNSProver, DEFAULT_ALGORITHMS, DEFAULT_DIGESTS, DEFAULT_TRUST_ANCHORS, getKeyTag, NoValidDsError, NoValidDnskeyError, SignedSet } from '../src/prove';
 import * as chai from 'chai';
 import { expect } from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
-import {logger} from '../src/log';
+import { logger } from '../src/log';
 import { keccak256 } from 'ethereumjs-util';
 
 chai.use(chaiAsPromised);
 
-function makeProver(responses: {[qname: string]: {[qtype: string]: packet.Packet[]}}, rootKey: packet.Dnskey) {
-    const sendQuery = function(q: packet.Packet): Promise<packet.Packet> {
-        if(q.questions.length !== 1) {
-            throw new Error("Queries must have exactly one question"); 
+function makeProver(responses: { [qname: string]: { [qtype: string]: packet.Packet[] } }, rootKey: packet.Dnskey) {
+    const sendQuery = function (q: packet.Packet): Promise<packet.Packet> {
+        if (q.questions.length !== 1) {
+            throw new Error("Queries must have exactly one question");
         };
         const question = q.questions[0];
         const response = responses[question.name]?.[question.type];
-        if(response === undefined) {
+        if (response === undefined) {
             throw new Error("Unexpected query for " + question.name + " " + question.type);
         }
-        return Promise.resolve(Object.assign(response, {questions: q.questions, id: q.id}));
+        return Promise.resolve(Object.assign(response, { questions: q.questions, id: q.id }));
     };
     const digests = Object.assign(DEFAULT_DIGESTS, {
         253: {
@@ -38,9 +38,9 @@ function makeProver(responses: {[qname: string]: {[qtype: string]: packet.Packet
 }
 
 function makeSignedResponse(a: packet.Answer[], keys: packet.Dnskey[]): packet.Packet {
-    a = a.map((ans) => Object.assign(ans, {class: 'IN', ttl: 3600}));
+    a = a.map((ans) => Object.assign(ans, { class: 'IN', ttl: 3600 }));
     const now = Math.floor(Date.now() / 1000);
-    for(const key of keys) {
+    for (const key of keys) {
         a.push({
             name: a[0].name,
             type: 'RRSIG',
@@ -272,7 +272,6 @@ describe('dnsprovejs', () => {
         await expect(prover.queryWithProof('DNSKEY', 'tld.')).to.be.rejectedWith(NoValidDsError);
     });
 
-
     it('requires that the DNSKEY be in the chain of trust', async () => {
         // In the situation that a self-signed DNSKEY RRSET has multiple keys and
         // multiple signatures, but only one of those keys has a DS record in the
@@ -296,5 +295,59 @@ describe('dnsprovejs', () => {
             },
         }, rootKey);
         await expect(prover.queryWithProof('DNSKEY', 'tld.')).to.be.rejectedWith(NoValidDsError);
+    });
+
+    it('sorts RRs correctly for canonical form', () => {
+        // Sort order should be as below.
+        // If we sort by the whole RR, we end up sorting them in reverse order, due to the length field.
+        const rrs = [
+            {
+                name: 'test',
+                type: 'DS',
+                class: 'IN',
+                flush: false,
+                data: {
+                    keyTag: 0x0123,
+                    algorithm: 8,
+                    digestType: 1,
+                    digest: Buffer.from('FFFFFFFF', 'hex'),
+                }
+            },
+            {
+                name: 'test',
+                type: 'DS',
+                class: 'IN',
+                flush: false,
+                data: {
+                    keyTag: 0x4567,
+                    algorithm: 8,
+                    digestType: 1,
+                    digest: Buffer.from('0000', 'hex'),
+                }
+            }
+        ];
+        const ss = new SignedSet<packet.Ds>(
+            rrs,
+            {
+                name: rrs[0].name,
+                type: 'RRSIG',
+                class: rrs[0].class,
+                data: {
+                    typeCovered: rrs[0].type,
+                    algorithm: 8,
+                    labels: 1,
+                    originalTTL: 3600,
+                    expiration: Date.now() / 1000 + 3600,
+                    inception: Date.now() / 1000 - 3600,
+                    keyTag: 12345,
+                    signersName: '.',
+                    signature: Buffer.of(),
+                }
+            }
+        );
+        // Sort and encode
+        const wire = ss.toWire(true);
+        const decoded = SignedSet.fromWire<packet.Ds>(wire, Buffer.of());
+        expect(decoded.records).to.deep.equal(rrs);
     });
 });
