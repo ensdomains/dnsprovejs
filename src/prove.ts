@@ -140,8 +140,8 @@ export class SignedSet<T extends packet.Answer> {
         let rrset = Buffer.concat(this.records
             // https://tools.ietf.org/html/rfc4034#section-6
             .sort((a, b) => {
-                const aenc = packet.record(a.type).encode(a.data);
-                const benc = packet.record(b.type).encode(b.data);
+                const aenc = packet.record(a.type).encode(a.data).slice(2);
+                const benc = packet.record(b.type).encode(b.data).slice(2);
                 return aenc.compare(benc);
             })
             .map(r => packet.answer.encode(Object.assign(r, {
