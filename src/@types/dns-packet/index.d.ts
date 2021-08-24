@@ -105,6 +105,7 @@ declare module 'dns-packet' {
     encode: encoder<T>
   }
 
+  const record: (type: string) => Encodable<Answer>
   const answer: Encodable<Answer>
   const dnskey: Encodable<Dnskey['data']>
   const name: Encodable<string>

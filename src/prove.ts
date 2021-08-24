@@ -139,11 +139,15 @@ export class SignedSet<T extends packet.Answer> {
     toWire(withRrsig: boolean = true): Buffer {
         let rrset = Buffer.concat(this.records
             // https://tools.ietf.org/html/rfc4034#section-6
+            .sort((a, b) => {
+                const aenc = packet.record(a.type).encode(a.data);
+                const benc = packet.record(b.type).encode(b.data);
+                return aenc.compare(benc);
+            })
             .map(r => packet.answer.encode(Object.assign(r, {
                 name: r.name.toLowerCase(), // (2)
                 ttl: this.signature.data.originalTTL // (5)
-            })))
-            .sort((a, b) => a.compare(b)));
+            }))));
         if(withRrsig) {
             let rrsig = packet.rrsig.encode(Object.assign({}, this.signature.data, { signature: Buffer.of()})).slice(2);
             return Buffer.concat([rrsig, rrset]);
