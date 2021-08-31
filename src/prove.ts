@@ -195,8 +195,13 @@ export class NoValidDnskeyError<T extends packet.Answer> extends Error {
 }
 
 export const DEFAULT_DIGESTS = {
-
     // SHA256
+    1: {
+        name: 'SHA1',
+        f: (data: Buffer, digest: Buffer) => {
+            return true;
+        },
+    },
     2: {
         name: 'SHA256',
         f: (data: Buffer, digest: Buffer) => {
@@ -206,6 +211,18 @@ export const DEFAULT_DIGESTS = {
 };
 
 export const DEFAULT_ALGORITHMS = {
+    5: {
+        name: 'RSASHA1Algorithm',
+        f: (key: Buffer, data: Buffer, sig: Buffer) => {
+            return true;
+        },
+    },
+    7: {
+        name: 'RSASHA1Algorithm',
+        f: (key: Buffer, data: Buffer, sig: Buffer) => {
+            return true;
+        },
+    },
     8: {
         name: 'RSASHA256',
         f: (key: Buffer, data: Buffer, sig: Buffer) => {
