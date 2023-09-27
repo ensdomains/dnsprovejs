@@ -31,5 +31,8 @@
   "bugs": {
     "url": "https://github.com/ensdomains/dnsprovejs/issues"
   },
-  "homepage": "https://github.com/ensdomains/dnsprovejs#readme"
+  "homepage": "https://github.com/ensdomains/dnsprovejs#readme",
+  "engines": {
+    "node": ">=16"
+  }
 }
