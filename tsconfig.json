@@ -3,9 +3,12 @@
     "module": "commonjs",
     "target": "es2015",
     "declaration": true,
-    "outDir": "./dist"
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "types": [
+      "bun-types", // add Bun global
+      "./src/@types/dns-packet"
+    ]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }

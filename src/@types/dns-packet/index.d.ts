@@ -1,25 +1,25 @@
 declare module 'dns-packet' {
-   const AUTHORITATIVE_ANSWER: number
-   const TRUNCATED_RESPONSE: number
-   const RECURSION_DESIRED: number
-   const RECURSION_AVAILABLE: number
-   const AUTHENTIC_DATA: number
-   const CHECKING_DISABLED: number
-   const DNSSEC_OK: number
-	
+  const AUTHORITATIVE_ANSWER: number
+  const TRUNCATED_RESPONSE: number
+  const RECURSION_DESIRED: number
+  const RECURSION_AVAILABLE: number
+  const AUTHENTIC_DATA: number
+  const CHECKING_DISABLED: number
+  const DNSSEC_OK: number
+
   interface decoder<T> {
     (buf: Buffer, offset?: number): T
-    bytes: number;
+    bytes: number
   }
 
-  const decode: decoder<Packet>;
+  const decode: decoder<Packet>
 
   interface encoder<T> {
     (packet: T, buf?: Buffer, offset?: number): Buffer
-    bytes: number;
+    bytes: number
   }
 
-  const encode: encoder<Packet>;
+  const encode: encoder<Packet>
 
   interface Packet {
     id?: number
@@ -31,7 +31,7 @@ declare module 'dns-packet' {
     authorities?: Answer[]
     additionals?: Answer[]
   }
-	
+
   interface Question {
     type: string
     class: string
@@ -40,7 +40,7 @@ declare module 'dns-packet' {
 
   interface AnswerBase {
     type: string
-    class: string
+    class?: string
     name: string
     ttl?: number
   }
@@ -98,7 +98,7 @@ declare module 'dns-packet' {
     data: Buffer[]
   }
 
-  type Answer = A|Dnskey|Ds|Opt|Rrsig|Rtxt
+  type Answer = A | Dnskey | Ds | Opt | Rrsig | Rtxt
 
   interface Encodable<T> {
     decode: decoder<T>
