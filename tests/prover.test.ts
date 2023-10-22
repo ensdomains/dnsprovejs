@@ -1,18 +1,42 @@
 import * as packet from 'dns-packet'
+import { expect, it, describe } from 'bun:test'
+import { keccak_256 } from '@noble/hashes/sha3'
 import {
-  dohQuery,
   DNSProver,
   DEFAULT_ALGORITHMS,
   DEFAULT_DIGESTS,
   DEFAULT_TRUST_ANCHORS,
   getKeyTag,
-  NoValidDsError,
-  NoValidDnskeyError,
   SignedSet,
 } from '../src/prove'
-import { expect, it, describe } from 'bun:test'
-import { logger } from '../src/log'
-import { keccak_256 } from '@noble/hashes/sha3'
+
+let randomdata = Uint8Array.of()
+function makeKey(name: string): packet.Dnskey {
+  randomdata = keccak_256(randomdata)
+  return {
+    name,
+    type: 'DNSKEY',
+    data: {
+      flags: 256, // ZSK
+      algorithm: 253,
+      key: Buffer.from(randomdata),
+    },
+  }
+}
+
+function makeDs(signedKey: packet.Dnskey): packet.Ds {
+  randomdata = keccak_256(randomdata)
+  return {
+    name: signedKey.name,
+    type: 'DS',
+    data: {
+      keyTag: getKeyTag(signedKey),
+      algorithm: signedKey.data.algorithm,
+      digestType: 253,
+      digest: Buffer.from(randomdata),
+    },
+  }
+}
 
 function makeProver(
   responses: { [qname: string]: { [qtype: string]: packet.Packet } },
@@ -25,9 +49,7 @@ function makeProver(
     const question = q.questions[0]
     const response = responses[question.name]?.[question.type]
     if (response === undefined) {
-      throw new Error(
-        'Unexpected query for ' + question.name + ' ' + question.type,
-      )
+      throw new Error(`Unexpected query for ${question.name} ${question.type}`)
     }
     return Promise.resolve(
       Object.assign(response, { questions: q.questions, id: q.id }),
@@ -36,13 +58,13 @@ function makeProver(
   const digests = Object.assign(DEFAULT_DIGESTS, {
     253: {
       name: 'DUMMY',
-      f: (data: Buffer) => true,
+      f: () => true,
     },
   })
   const algorithms = Object.assign(DEFAULT_ALGORITHMS, {
     253: {
       name: 'DUMMY',
-      f: (key: Buffer, data: Buffer, sig: Buffer) => true,
+      f: () => true,
     },
   })
   const anchors = DEFAULT_TRUST_ANCHORS.slice()
@@ -51,10 +73,10 @@ function makeProver(
 }
 
 function makeSignedResponse(
-  a: packet.Answer[],
+  answers: packet.Answer[],
   keys: packet.Dnskey[],
 ): packet.Packet {
-  a = a.map((ans) => Object.assign(ans, { class: 'IN', ttl: 3600 }))
+  const a = answers.map((ans) => Object.assign(ans, { class: 'IN', ttl: 3600 }))
   const now = Math.floor(Date.now() / 1000)
   for (const key of keys) {
     a.push({
@@ -80,34 +102,6 @@ function makeSignedResponse(
     rcode: 'NOERROR',
     answers: a,
     questions: [],
-  }
-}
-
-let randomdata = Uint8Array.of()
-function makeKey(name: string): packet.Dnskey {
-  randomdata = keccak_256(randomdata)
-  return {
-    name: name,
-    type: 'DNSKEY',
-    data: {
-      flags: 256, // ZSK
-      algorithm: 253,
-      key: Buffer.from(randomdata),
-    },
-  }
-}
-
-function makeDs(signedKey: packet.Dnskey): packet.Ds {
-  randomdata = keccak_256(randomdata)
-  return {
-    name: signedKey.name,
-    type: 'DS',
-    data: {
-      keyTag: getKeyTag(signedKey),
-      algorithm: signedKey.data.algorithm,
-      digestType: 253,
-      digest: Buffer.from(randomdata),
-    },
   }
 }
 
