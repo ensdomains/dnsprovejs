@@ -1,4 +1,4 @@
-# dnsprove.js 
+# dnsprove.js
 
 A TypeScript/JavaScript library for querying and validating DNSSEC data from DNS.
 
@@ -12,7 +12,7 @@ npm install '@ensdomains/dnsprovejs' --save
 
 ```js
 import { DNSProver } from '@ensdomains/dnsprovejs'
-const prover = DNSProver.create("https://cloudflare-dns.com/dns-query")
+const prover = DNSProver.create('https://cloudflare-dns.com/dns-query')
 const result = await prover.queryWithProof('TXT', textDomain)
 ```
 

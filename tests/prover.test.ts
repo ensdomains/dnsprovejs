@@ -16,7 +16,7 @@ import { keccak_256 } from '@noble/hashes/sha3'
 
 function makeProver(
   responses: { [qname: string]: { [qtype: string]: packet.Packet } },
-  rootKey: packet.Dnskey
+  rootKey: packet.Dnskey,
 ) {
   const sendQuery = function (q: packet.Packet): Promise<packet.Packet> {
     if (q.questions.length !== 1) {
@@ -26,11 +26,11 @@ function makeProver(
     const response = responses[question.name]?.[question.type]
     if (response === undefined) {
       throw new Error(
-        'Unexpected query for ' + question.name + ' ' + question.type
+        'Unexpected query for ' + question.name + ' ' + question.type,
       )
     }
     return Promise.resolve(
-      Object.assign(response, { questions: q.questions, id: q.id })
+      Object.assign(response, { questions: q.questions, id: q.id }),
     )
   }
   const digests = Object.assign(DEFAULT_DIGESTS, {
@@ -52,7 +52,7 @@ function makeProver(
 
 function makeSignedResponse(
   a: packet.Answer[],
-  keys: packet.Dnskey[]
+  keys: packet.Dnskey[],
 ): packet.Packet {
   a = a.map((ans) => Object.assign(ans, { class: 'IN', ttl: 3600 }))
   const now = Math.floor(Date.now() / 1000)
@@ -113,7 +113,7 @@ function makeDs(signedKey: packet.Dnskey): packet.Ds {
 
 function makeDsResponse(
   signedKey: packet.Dnskey,
-  signingKeys: packet.Dnskey[]
+  signingKeys: packet.Dnskey[],
 ): packet.Packet {
   return makeSignedResponse([makeDs(signedKey)], signingKeys)
 }
@@ -134,7 +134,7 @@ describe('dnsprovejs', () => {
                 data: [Buffer.from('Hello, world!')],
               },
             ],
-            [testKey]
+            [testKey],
           ),
           DNSKEY: makeSignedResponse([testKey], [testKey]),
           DS: makeDsResponse(testKey, [tldKey]),
@@ -147,7 +147,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
     const result = await prover.queryWithProof('TXT', 'test.tld.')
 
@@ -242,11 +242,11 @@ describe('dnsprovejs', () => {
         '.': {
           DNSKEY: makeSignedResponse(
             [alternateRootKey, rootKey],
-            [alternateRootKey, rootKey]
+            [alternateRootKey, rootKey],
           ),
         },
       },
-      rootKey
+      rootKey,
     )
     const result = await prover.queryWithProof('DNSKEY', '.')
 
@@ -280,7 +280,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
     const result = await prover.queryWithProof('DNSKEY', 'tld.')
     expect(result.answer.records.length).toEqual(1)
@@ -303,7 +303,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
 
     try {
@@ -329,7 +329,7 @@ describe('dnsprovejs', () => {
                 data: [Buffer.from('test')],
               },
             ],
-            [tldKey]
+            [tldKey],
           ),
         },
         'tld.': {
@@ -340,7 +340,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
 
     try {
@@ -365,7 +365,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
 
     try {
@@ -398,7 +398,7 @@ describe('dnsprovejs', () => {
           DNSKEY: makeSignedResponse([rootKey], [rootKey]),
         },
       },
-      rootKey
+      rootKey,
     )
 
     try {

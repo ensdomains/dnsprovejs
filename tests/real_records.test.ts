@@ -14,14 +14,14 @@ function makeProver(responses: {
     const response = responses[question.name]?.[question.type]
     if (response === undefined) {
       throw new Error(
-        'Unexpected query for ' + question.name + ' ' + question.type
+        'Unexpected query for ' + question.name + ' ' + question.type,
       )
     }
     return Promise.resolve(
       Object.assign(packet.decode(Buffer.from(response, 'hex')), {
         questions: q.questions,
         id: q.id,
-      })
+      }),
     )
   }
   return new DNSProver(sendQuery)
@@ -57,11 +57,11 @@ function checkKeyTags(result: ProvableAnswer<any>) {
       case 'DS':
         const dsTags = proof.records.map((r) => (r as packet.Ds).data.keyTag)
         const validKeys = last.records.filter((r: packet.Dnskey) =>
-          dsTags.includes(getKeyTag(r))
+          dsTags.includes(getKeyTag(r)),
         )
         expect(validKeys).not.toBeEmpty()
         expect(validKeys.map((r) => getKeyTag(r))).toContain(
-          last.signature.data.keyTag
+          last.signature.data.keyTag,
         )
     }
     last = proof
