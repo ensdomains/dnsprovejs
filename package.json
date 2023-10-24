@@ -13,7 +13,7 @@
     "@types/mocha": "^8.2.0",
     "@types/node": "^14.14.22",
     "@types/node-fetch": "^2.5.8",
-    "bun-types": "^1.0.3",
+    "bun-types": "^1.0.7",
     "eslint": "^8.52.0",
     "eslint-config-airbnb-typescript": "^17.1.0",
     "eslint-config-prettier": "^9.0.0",

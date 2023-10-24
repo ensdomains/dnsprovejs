@@ -1,14 +1,9 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2015",
     "declaration": true,
-    "skipLibCheck": true,
     "outDir": "./dist",
-    "types": [
-      "bun-types", // add Bun global
-      "./src/@types/dns-packet"
-    ]
+    "types": ["node"]
   },
   "include": ["src/**/*"]
 }
