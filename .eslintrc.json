@@ -1,0 +1,35 @@
+{
+  "root": true,
+  "extends": [
+    "airbnb-base",
+    "airbnb-typescript/base",
+    "prettier",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "ignorePatterns": ["tests/**/*"],
+  "overrides": [
+    {
+      "parserOptions": {
+        "project": "./tests/tsconfig.json"
+      },
+      "files": ["tests/**/*"]
+    }
+  ],
+  "rules": {
+    "no-console": "off",
+    "prettier/prettier": "error",
+    "import/prefer-default-export": "off",
+    "import/extensions": ["off"],
+    "max-classes-per-file": "off",
+    "no-restricted-syntax": "off",
+    "no-bitwise": "off",
+    "no-plusplus": "off",
+    "no-continue": "off",
+    "no-await-in-loop": "off"
+  }
+}
