@@ -1,6 +1,6 @@
+import { sha256 } from '@noble/hashes/sha256'
 import * as packet from 'dns-packet'
 import * as packet_types from 'dns-packet/types'
-import { sha256 } from '@noble/hashes/sha256'
 import { logger } from './log'
 
 export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [
@@ -234,7 +234,7 @@ export const DEFAULT_DIGESTS = {
   2: {
     name: 'SHA256',
     f: (data: Buffer, digest: Buffer) => {
-      return digest.equals(sha256(data))
+      return digest.equals(Buffer.from(sha256(data)))
     },
   },
 }
