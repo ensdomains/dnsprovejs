@@ -92,8 +92,8 @@ export function dohQuery(url: string) {
     const buf = packet.encode(q)
     const response = await fetch(
       `${url}?${encodeURLParams({
-        ct: 'application/dns-udpwireformat',
-        dns: buf.toString('base64'),
+        ct: 'application/dns-message',
+        dns: buf.toString('base64url'),
         ts: Date.now().toString(),
       })}`,
     )

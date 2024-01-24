@@ -98,4 +98,24 @@ describe('dnsprovejs', () => {
     })
     expect(result.proofs.length).toEqual(5)
   })
+
+  it('queries TXT from cloudflare doh correctly', async () => {
+    const prover = DNSProver.create('https://cloudflare-dns.com/dns-query');
+    const result = await prover.queryWithProof('TXT', '_ens.proofofattendance.com')
+    checkKeyTags(result)
+    expect(result.answer).toMatchObject({
+      records: [{ name: '_ens.proofofattendance.com', type: 'TXT' }],
+      signature: { name: '_ens.proofofattendance.com' },
+    })
+  });
+
+  it('queries TXT from google doh correctly', async () => {
+    const prover = DNSProver.create('https://dns.google/dns-query');
+    const result = await prover.queryWithProof('TXT', '_ens.proofofattendance.com')
+    checkKeyTags(result)
+    expect(result.answer).toMatchObject({
+      records: [{ name: '_ens.proofofattendance.com', type: 'TXT' }],
+      signature: { name: '_ens.proofofattendance.com' },
+    })
+  })
 })
