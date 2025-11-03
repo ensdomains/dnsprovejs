@@ -93,7 +93,7 @@ export function dohQuery(url: string) {
     const response = await fetch(
       `${url}?${encodeURLParams({
         ct: 'application/dns-udpwireformat',
-        dns: buf.toString('base64'),
+        dns: buf.toString('base64url'),
         ts: Date.now().toString(),
       })}`,
     )
