@@ -28,8 +28,19 @@ function checkKeyTags(result: ProvableAnswer<any>) {
 }
 
 describe('dnsprovejs', () => {
-  it('queries TXT _ens.taytems.xyz correctly', async () => {
+  it('queries TXT _ens.taytems.xyz correctly on cloudflare dns', async () => {
     const prover = DNSProver.create('https://cloudflare-dns.com/dns-query')
+    const result = await prover.queryWithProof('TXT', '_ens.taytems.xyz')
+    checkKeyTags(result)
+    expect(result.answer).toMatchObject({
+      records: [{ name: '_ens.taytems.xyz', type: 'TXT' }],
+      signature: { name: '_ens.taytems.xyz' },
+    })
+    expect(result.proofs.length).toEqual(5)
+  })
+
+  it('queries TXT _ens.taytems.xyz correctly on google dns', async () => {
+    const prover = DNSProver.create('https://dns.google/dns-query')
     const result = await prover.queryWithProof('TXT', '_ens.taytems.xyz')
     checkKeyTags(result)
     expect(result.answer).toMatchObject({
