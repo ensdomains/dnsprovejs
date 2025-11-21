@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha256'
 import * as packet from 'dns-packet'
 import * as packet_types from 'dns-packet/types'
 import { logger } from './log'
+import { bufferToBase64url } from './utils/base64url'
 
 export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [
   {
@@ -33,12 +34,6 @@ export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [
     },
   },
 ]
-
-function encodeURLParams(p: { [key: string]: string }): string {
-  return Object.entries(p)
-    .map((kv) => kv.map(encodeURIComponent).join('='))
-    .join('&')
-}
 
 export function getKeyTag(key: packet.Dnskey): number {
   const data = packet.dnskey.encode(key.data).slice(2)
@@ -90,13 +85,12 @@ export function answersToString(answers: packet.Answer[]): string {
 export function dohQuery(url: string) {
   return async function getDNS(q: packet.Packet): Promise<packet.Packet> {
     const buf = packet.encode(q)
-    const response = await fetch(
-      `${url}?${encodeURLParams({
-        ct: 'application/dns-udpwireformat',
-        dns: buf.toString('base64url'),
-        ts: Date.now().toString(),
-      })}`,
-    )
+    const dnsParam = bufferToBase64url(buf)
+    const response = await fetch(`${url}?dns=${encodeURIComponent(dnsParam)}`, {
+      headers: {
+        accept: 'application/dns-message',
+      },
+    })
     return packet.decode(Buffer.from(await response.arrayBuffer()))
   }
 }
