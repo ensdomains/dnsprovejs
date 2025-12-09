@@ -86,7 +86,8 @@ export function dohQuery(url: string) {
   return async function getDNS(q: packet.Packet): Promise<packet.Packet> {
     const buf = packet.encode(q)
     const dnsParam = bufferToBase64url(buf)
-    const response = await fetch(`${url}?dns=${encodeURIComponent(dnsParam)}`, {
+    const params = `dns=${dnsParam}&ts=${Date.now().toString()}`    
+    const response = await fetch(`${url}?${params}`, {
       headers: {
         accept: 'application/dns-message',
       },
