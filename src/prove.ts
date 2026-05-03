@@ -33,6 +33,21 @@ export const DEFAULT_TRUST_ANCHORS: packet.Ds[] = [
       ),
     },
   },
+  {
+    name: '.',
+    type: 'DS',
+    class: 'IN',
+    data: {
+      keyTag: 38696,
+      algorithm: 8,
+      digestType: 2,
+      digest: Buffer.from(
+        '683D2D0ACB8C9B712A1948B27F741219298D0A450D612C483AF444A4C0FB2B16',
+        'hex',
+      ),
+    },
+  },
+  
 ]
 
 export function getKeyTag(key: packet.Dnskey): number {
