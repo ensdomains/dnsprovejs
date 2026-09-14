@@ -1,6 +1,7 @@
-import * as packet from 'dns-packet'
+import type { DnskeyAnswer, DSAnswer, Packet } from 'dns-packet'
 import { expect, it, describe } from 'bun:test'
-import { keccak_256 } from '@noble/hashes/sha3'
+import { keccak_256 } from '@noble/hashes/sha3.js'
+import { bytesToHex } from '@noble/hashes/utils.js'
 import {
   DNSProver,
   DEFAULT_ALGORITHMS,
@@ -8,10 +9,12 @@ import {
   DEFAULT_TRUST_ANCHORS,
   getKeyTag,
   SignedSet,
-} from '../src/prove'
+  type DnsResponse,
+  type RecordAnswer,
+} from '../src/prove.js'
 
-let randomdata = Uint8Array.of()
-function makeKey(name: string): packet.Dnskey {
+let randomdata: Uint8Array = Uint8Array.of()
+function makeKey(name: string): DnskeyAnswer {
   randomdata = keccak_256(randomdata)
   return {
     name,
@@ -24,7 +27,7 @@ function makeKey(name: string): packet.Dnskey {
   }
 }
 
-function makeDs(signedKey: packet.Dnskey): packet.Ds {
+function makeDs(signedKey: DnskeyAnswer): DSAnswer {
   randomdata = keccak_256(randomdata)
   return {
     name: signedKey.name,
@@ -39,14 +42,14 @@ function makeDs(signedKey: packet.Dnskey): packet.Ds {
 }
 
 function makeProver(
-  responses: { [qname: string]: { [qtype: string]: packet.Packet } },
-  rootKey: packet.Dnskey,
+  responses: { [qname: string]: { [qtype: string]: DnsResponse } },
+  rootKey: DnskeyAnswer,
 ) {
-  const sendQuery = function (q: packet.Packet): Promise<packet.Packet> {
-    if (q.questions.length !== 1) {
+  const sendQuery = function (q: Packet): Promise<DnsResponse> {
+    const [question, ...rest] = q.questions ?? []
+    if (question === undefined || rest.length > 0) {
       throw new Error('Queries must have exactly one question')
     }
-    const question = q.questions[0]
     const response = responses[question.name]?.[question.type]
     if (response === undefined) {
       throw new Error(`Unexpected query for ${question.name} ${question.type}`)
@@ -73,10 +76,12 @@ function makeProver(
 }
 
 function makeSignedResponse(
-  answers: packet.Answer[],
-  keys: packet.Dnskey[],
-): packet.Packet {
-  const a = answers.map((ans) => Object.assign(ans, { class: 'IN', ttl: 3600 }))
+  answers: RecordAnswer[],
+  keys: DnskeyAnswer[],
+): DnsResponse {
+  const a: RecordAnswer[] = answers.map((ans) =>
+    Object.assign(ans, { class: 'IN' as const, ttl: 3600 }),
+  )
   const now = Math.floor(Date.now() / 1000)
   for (const key of keys) {
     a.push({
@@ -106,10 +111,58 @@ function makeSignedResponse(
 }
 
 function makeDsResponse(
-  signedKey: packet.Dnskey,
-  signingKeys: packet.Dnskey[],
-): packet.Packet {
+  signedKey: DnskeyAnswer,
+  signingKeys: DnskeyAnswer[],
+): DnsResponse {
   return makeSignedResponse([makeDs(signedKey)], signingKeys)
+}
+
+// Two DS records whose whole-RR order is the reverse of their canonical
+// (RDATA) order, because of the length field.
+function makeCanonicalDsSet() {
+  const rrs: DSAnswer[] = [
+    {
+      name: 'test',
+      type: 'DS',
+      class: 'IN',
+      flush: false,
+      data: {
+        keyTag: 0x0123,
+        algorithm: 8,
+        digestType: 1,
+        digest: Buffer.from('FFFFFFFF', 'hex'),
+      },
+    },
+    {
+      name: 'test',
+      type: 'DS',
+      class: 'IN',
+      flush: false,
+      data: {
+        keyTag: 0x4567,
+        algorithm: 8,
+        digestType: 1,
+        digest: Buffer.from('0000', 'hex'),
+      },
+    },
+  ]
+  const ss = new SignedSet<DSAnswer>(rrs, {
+    name: rrs[0].name,
+    type: 'RRSIG',
+    class: rrs[0].class,
+    data: {
+      typeCovered: rrs[0].type,
+      algorithm: 8,
+      labels: 1,
+      originalTTL: 3600,
+      expiration: Date.now() / 1000 + 3600,
+      inception: Date.now() / 1000 - 3600,
+      keyTag: 12345,
+      signersName: '.',
+      signature: Buffer.of(),
+    },
+  })
+  return { rrs, ss }
 }
 
 describe('dnsprovejs', () => {
@@ -143,7 +196,7 @@ describe('dnsprovejs', () => {
       },
       rootKey,
     )
-    const result = await prover.queryWithProof('TXT', 'test.tld.')
+    const result = (await prover.queryWithProof('TXT', 'test.tld.'))!
 
     expect(result.answer).toMatchObject({
       records: [
@@ -276,7 +329,7 @@ describe('dnsprovejs', () => {
       },
       rootKey,
     )
-    const result = await prover.queryWithProof('DNSKEY', 'tld.')
+    const result = (await prover.queryWithProof('DNSKEY', 'tld.'))!
     expect(result.answer.records.length).toEqual(1)
     expect(result.proofs.length).toEqual(2)
   })
@@ -405,51 +458,36 @@ describe('dnsprovejs', () => {
   it('sorts RRs correctly for canonical form', () => {
     // Sort order should be as below.
     // If we sort by the whole RR, we end up sorting them in reverse order, due to the length field.
-    const rrs = [
-      {
-        name: 'test',
-        type: 'DS' as const,
-        class: 'IN',
-        flush: false,
-        data: {
-          keyTag: 0x0123,
-          algorithm: 8,
-          digestType: 1,
-          digest: Buffer.from('FFFFFFFF', 'hex'),
-        },
-      },
-      {
-        name: 'test',
-        type: 'DS' as const,
-        class: 'IN',
-        flush: false,
-        data: {
-          keyTag: 0x4567,
-          algorithm: 8,
-          digestType: 1,
-          digest: Buffer.from('0000', 'hex'),
-        },
-      },
-    ]
-    const ss = new SignedSet<packet.Ds>(rrs, {
-      name: rrs[0].name,
-      type: 'RRSIG',
-      class: rrs[0].class,
-      data: {
-        typeCovered: rrs[0].type,
-        algorithm: 8,
-        labels: 1,
-        originalTTL: 3600,
-        expiration: Date.now() / 1000 + 3600,
-        inception: Date.now() / 1000 - 3600,
-        keyTag: 12345,
-        signersName: '.',
-        signature: Buffer.of(),
-      },
-    })
+    const { rrs, ss } = makeCanonicalDsSet()
     // Sort and encode
     const wire = ss.toWire(true)
-    const decoded = SignedSet.fromWire<packet.Ds>(wire, Buffer.of())
+    const decoded = SignedSet.fromWire<DSAnswer>(wire, new Uint8Array())
     expect(decoded.records).toStrictEqual(rrs)
+  })
+
+  // Browsers have no global `Buffer` — relying on one is what broke loading
+  // the library there. A fresh process can drop the global before anything is
+  // imported, then load the library and round-trip a set through the wire.
+  it('works without a global Buffer', () => {
+    const wire = bytesToHex(makeCanonicalDsSet().ss.toWire())
+    const script = `
+      delete globalThis.Buffer
+      if (typeof Buffer !== 'undefined') throw new Error('Buffer is still global')
+      const { SignedSet } = await import(${JSON.stringify(
+        `${import.meta.dir}/../src/index.ts`,
+      )})
+      const wire = Uint8Array.from(
+        ${JSON.stringify(wire)}.match(/../g).map((h) => parseInt(h, 16)),
+      )
+      const again = SignedSet.fromWire(wire, new Uint8Array()).toWire()
+      if (again.length !== wire.length || again.some((b, i) => b !== wire[i]))
+        throw new Error('the round trip changed the wire form')
+    `
+    const { exitCode, stderr } = Bun.spawnSync({
+      cmd: [process.execPath, '--eval', script],
+      stderr: 'pipe',
+    })
+    expect(stderr.toString()).not.toContain('Error')
+    expect(exitCode).toBe(0)
   })
 })
