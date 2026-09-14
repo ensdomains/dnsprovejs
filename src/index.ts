@@ -6,7 +6,13 @@ export {
   DNSProver,
   NoValidDsError,
   NoValidDnskeyError,
-  ProvableAnswer,
   ResponseCodeError,
   SignedSet,
-} from './prove'
+} from './prove.js'
+export type {
+  DigestAlgorithm,
+  DnsResponse,
+  ProvableAnswer,
+  RecordAnswer,
+  SignatureAlgorithm,
+} from './prove.js'

@@ -1,21 +1,26 @@
-import * as packet from 'dns-packet'
-import { DNSProver, getKeyTag, ProvableAnswer } from '../src/prove'
+import type { DnskeyAnswer, DSAnswer } from 'dns-packet'
+import {
+  DNSProver,
+  getKeyTag,
+  type ProvableAnswer,
+  type RecordAnswer,
+} from '../src/prove.js'
 
 import { describe, expect, it } from 'bun:test'
 
 // Validates the chain of trust by checking for matching key tags.
-function checkKeyTags(result: ProvableAnswer<any>) {
+function checkKeyTags(result: ProvableAnswer<RecordAnswer>) {
   let last = result.answer
   for (const proof of result.proofs.reverse()) {
     switch (proof.records[0].type) {
       case 'DNSKEY':
-        const keyTags = proof.records.map((r) => getKeyTag(r as packet.Dnskey))
+        const keyTags = proof.records.map((r) => getKeyTag(r as DnskeyAnswer))
         expect(keyTags).toContain(last.signature.data.keyTag)
 
         break
       case 'DS':
-        const dsTags = proof.records.map((r) => (r as packet.Ds).data.keyTag)
-        const validKeys = last.records.filter((r: packet.Dnskey) =>
+        const dsTags = proof.records.map((r) => (r as DSAnswer).data.keyTag)
+        const validKeys = (last.records as DnskeyAnswer[]).filter((r) =>
           dsTags.includes(getKeyTag(r)),
         )
         expect(validKeys).not.toBeEmpty()
@@ -30,7 +35,7 @@ function checkKeyTags(result: ProvableAnswer<any>) {
 describe('dnsprovejs', () => {
   it('queries TXT _ens.taytems.xyz correctly on cloudflare dns', async () => {
     const prover = DNSProver.create('https://cloudflare-dns.com/dns-query')
-    const result = await prover.queryWithProof('TXT', '_ens.taytems.xyz')
+    const result = (await prover.queryWithProof('TXT', '_ens.taytems.xyz'))!
     checkKeyTags(result)
     expect(result.answer).toMatchObject({
       records: [{ name: '_ens.taytems.xyz', type: 'TXT' }],
@@ -41,7 +46,7 @@ describe('dnsprovejs', () => {
 
   it('queries TXT _ens.taytems.xyz correctly on google dns', async () => {
     const prover = DNSProver.create('https://dns.google/dns-query')
-    const result = await prover.queryWithProof('TXT', '_ens.taytems.xyz')
+    const result = (await prover.queryWithProof('TXT', '_ens.taytems.xyz'))!
     checkKeyTags(result)
     expect(result.answer).toMatchObject({
       records: [{ name: '_ens.taytems.xyz', type: 'TXT' }],
