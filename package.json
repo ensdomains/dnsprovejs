@@ -1,53 +1,53 @@
 {
-  "name": "@ensdomains/dnsprovejs",
-  "version": "1.0.0",
-  "description": "A library to generate chains of trust proving DNS records via DNSSEC",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    },
-    "./package.json": "./package.json"
-  },
-  "dependencies": {
-    "@noble/hashes": "^2",
-    "@scure/base": "^2",
-    "@types/dns-packet": "^5.6.5",
-    "buffer": "^6.0.3",
-    "dns-packet": "^5.6.1",
-    "typescript-logging": "^1.0.1"
-  },
-  "devDependencies": {
-    "@types/mocha": "^8.2.0",
-    "@types/node": "^22",
-    "@types/node-fetch": "^2.5.8",
-    "bun-types": "^1.4.2",
-    "eslint": "^8.52.0",
-    "eslint-config-airbnb-typescript": "^17.1.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.0.3",
-    "typescript": "^5"
-  },
-  "scripts": {
-    "test": "bun test tests",
-    "build": "tsc",
-    "prepublishOnly": "npm run build"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ensdomains/dnsprovejs.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ensdomains/dnsprovejs/issues"
-  },
-  "homepage": "https://github.com/ensdomains/dnsprovejs#readme",
-  "engines": {
-    "node": ">=20.19.0"
-  }
+	"name": "@ensdomains/dnsprovejs",
+	"version": "1.0.1",
+	"description": "A library to generate chains of trust proving DNS records via DNSSEC",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"dependencies": {
+		"@noble/hashes": "^2",
+		"@scure/base": "^2",
+		"@types/dns-packet": "^5.6.5",
+		"buffer": "^6.0.3",
+		"dns-packet": "^5.6.1",
+		"typescript-logging": "^1.0.1"
+	},
+	"devDependencies": {
+		"@types/mocha": "^8.2.0",
+		"@types/node": "^22",
+		"@types/node-fetch": "^2.5.8",
+		"bun-types": "^1.4.2",
+		"eslint": "^8.52.0",
+		"eslint-config-airbnb-typescript": "^17.1.0",
+		"eslint-config-prettier": "^9.0.0",
+		"eslint-plugin-prettier": "^5.0.1",
+		"prettier": "^3.0.3",
+		"typescript": "^5"
+	},
+	"scripts": {
+		"test": "bun test tests",
+		"build": "tsc",
+		"prepublishOnly": "npm run build"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ensdomains/dnsprovejs.git"
+	},
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/ensdomains/dnsprovejs/issues"
+	},
+	"homepage": "https://github.com/ensdomains/dnsprovejs#readme",
+	"engines": {
+		"node": ">=20.19.0"
+	}
 }
