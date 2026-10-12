@@ -1,7 +1,7 @@
 import {
   Category,
-  CategoryServiceFactory,
   CategoryConfiguration,
+  CategoryServiceFactory,
   LogLevel,
 } from 'typescript-logging'
 

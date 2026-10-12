@@ -8,8 +8,8 @@
  * would defeat that, since bundlers never map it to a package.
  */
 import { Buffer } from 'buffer'
-import * as dnsPacket from 'dns-packet'
 import type { Answer, DecodedPacket, Packet, RrsigData } from 'dns-packet'
+import * as dnsPacket from 'dns-packet'
 
 /** The Buffer type the dns-packet typings expect. */
 type PacketBuffer = Parameters<typeof dnsPacket.decode>[0]

@@ -5,7 +5,7 @@ A TypeScript/JavaScript library for querying and validating DNSSEC data from DNS
 ## Installing
 
 ```
-bun add @ensdomains/dnsprovejs
+pnpm add @ensdomains/dnsprovejs
 ```
 
 ## Usage
@@ -23,5 +23,5 @@ Please refer to [the doc](https://dnsprovejs.readthedocs.io)
 ## Testing
 
 ```
-bun test
+pnpm test
 ```

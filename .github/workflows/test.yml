@@ -6,18 +6,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: oven-sh/setup-bun@v1
+      - uses: actions/checkout@v6
+      - uses: pnpm/setup@v3
         with:
-          bun-version: latest
-      - run: bun install
-      - run: bun test
+          cache: true
+          require-lockfile: true
+      - run: pnpm test
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: oven-sh/setup-bun@v1
+      - uses: actions/checkout@v6
+      - uses: pnpm/setup@v3
         with:
-          bun-version: latest
-      - run: bun install
-      - run: bun run build
+          cache: true
+          require-lockfile: true
+      - run: pnpm build
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
+      - run: pnpm lint
