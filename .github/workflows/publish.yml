@@ -1,0 +1,22 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/setup@v3
+        with:
+          require-lockfile: true
+      - run: pnpm lint
+      - run: pnpm test
+      - name: Stage for publishing
+        run: pnpm stage publish --no-git-checks
