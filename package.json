@@ -21,21 +21,15 @@
     "typescript-logging": "^1.0.1"
   },
   "devDependencies": {
-    "@types/mocha": "^8.2.0",
+    "@biomejs/biome": "2.5.15",
     "@types/node": "^22",
-    "@types/node-fetch": "^2.5.8",
-    "bun-types": "^1.4.2",
-    "eslint": "^8.52.0",
-    "eslint-config-airbnb-typescript": "^17.1.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.0.3",
     "typescript": "^5"
   },
   "scripts": {
-    "test": "bun test tests",
+    "test": "node --import ./tests/register.ts --test 'tests/*.test.ts'",
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "lint": "biome check",
+    "prepublishOnly": "pnpm build"
   },
   "repository": {
     "type": "git",
@@ -49,5 +43,16 @@
   "homepage": "https://github.com/ensdomains/dnsprovejs#readme",
   "engines": {
     "node": ">=20.19.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^12.11.2"
+    },
+    "runtime": {
+      "name": "node",
+      "version": "^24",
+      "onFail": "download"
+    }
   }
 }

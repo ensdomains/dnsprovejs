@@ -1,16 +1,18 @@
-import type { DnskeyAnswer, DSAnswer, Packet } from 'dns-packet'
-import { expect, it, describe } from 'bun:test'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { describe, it } from 'node:test'
 import { keccak_256 } from '@noble/hashes/sha3.js'
 import { bytesToHex } from '@noble/hashes/utils.js'
+import type { DnskeyAnswer, DSAnswer, Packet } from 'dns-packet'
 import {
-  DNSProver,
   DEFAULT_ALGORITHMS,
   DEFAULT_DIGESTS,
   DEFAULT_TRUST_ANCHORS,
-  getKeyTag,
-  SignedSet,
+  DNSProver,
   type DnsResponse,
+  getKeyTag,
   type RecordAnswer,
+  SignedSet,
 } from '../src/prove.js'
 
 let randomdata: Uint8Array = Uint8Array.of()
@@ -45,7 +47,7 @@ function makeProver(
   responses: { [qname: string]: { [qtype: string]: DnsResponse } },
   rootKey: DnskeyAnswer,
 ) {
-  const sendQuery = function (q: Packet): Promise<DnsResponse> {
+  const sendQuery = (q: Packet): Promise<DnsResponse> => {
     const [question, ...rest] = q.questions ?? []
     if (question === undefined || rest.length > 0) {
       throw new Error('Queries must have exactly one question')
@@ -198,7 +200,7 @@ describe('dnsprovejs', () => {
     )
     const result = (await prover.queryWithProof('TXT', 'test.tld.'))!
 
-    expect(result.answer).toMatchObject({
+    assert.partialDeepStrictEqual(result.answer, {
       records: [
         {
           name: 'test.tld.',
@@ -218,7 +220,7 @@ describe('dnsprovejs', () => {
       },
     })
 
-    expect(result.proofs[0]).toMatchObject({
+    assert.partialDeepStrictEqual(result.proofs[0], {
       records: [{ name: '.', type: 'DNSKEY' }],
       signature: {
         name: '.',
@@ -228,7 +230,7 @@ describe('dnsprovejs', () => {
         },
       },
     })
-    expect(result.proofs[1]).toMatchObject({
+    assert.partialDeepStrictEqual(result.proofs[1], {
       records: [
         { name: 'tld.', type: 'DS', data: { keyTag: getKeyTag(tldKey) } },
       ],
@@ -240,7 +242,7 @@ describe('dnsprovejs', () => {
         },
       },
     })
-    expect(result.proofs[2]).toMatchObject({
+    assert.partialDeepStrictEqual(result.proofs[2], {
       records: [{ name: 'tld.', type: 'DNSKEY' }],
       signature: {
         name: 'tld.',
@@ -250,7 +252,7 @@ describe('dnsprovejs', () => {
         },
       },
     })
-    expect(result.proofs[3]).toMatchObject({
+    assert.partialDeepStrictEqual(result.proofs[3], {
       records: [
         { name: 'test.tld.', type: 'DS', data: { keyTag: getKeyTag(testKey) } },
       ],
@@ -262,7 +264,7 @@ describe('dnsprovejs', () => {
         },
       },
     })
-    expect(result.proofs[4]).toMatchObject({
+    assert.partialDeepStrictEqual(result.proofs[4], {
       records: [
         {
           name: 'test.tld.',
@@ -297,17 +299,17 @@ describe('dnsprovejs', () => {
     )
     const result = await prover.queryWithProof('DNSKEY', '.')
 
-    expect(result).toMatchObject({
+    assert.partialDeepStrictEqual(result, {
       answer: {
         signature: {
           data: {
             algorithm: 253,
           },
         },
-        records: { length: 2 },
       },
       proofs: [],
     })
+    assert.equal(result?.answer.records.length, 2)
   })
 
   it('ignores DSes with unknown digest types', async () => {
@@ -330,8 +332,8 @@ describe('dnsprovejs', () => {
       rootKey,
     )
     const result = (await prover.queryWithProof('DNSKEY', 'tld.'))!
-    expect(result.answer.records.length).toEqual(1)
-    expect(result.proofs.length).toEqual(2)
+    assert.deepStrictEqual(result.answer.records.length, 1)
+    assert.deepStrictEqual(result.proofs.length, 2)
   })
 
   it('throws an exception if no valid DS records are found', async () => {
@@ -353,11 +355,9 @@ describe('dnsprovejs', () => {
       rootKey,
     )
 
-    try {
-      await prover.queryWithProof('DNSKEY', 'tld.')
-    } catch (e) {
-      expect((e as Error).name).toEqual('NoValidDsError')
-    }
+    await assert.rejects(prover.queryWithProof('DNSKEY', 'tld.'), {
+      name: 'NoValidDsError',
+    })
   })
 
   it('throws an exception if no valid DNSKEY records are found', async () => {
@@ -390,11 +390,9 @@ describe('dnsprovejs', () => {
       rootKey,
     )
 
-    try {
-      await prover.queryWithProof('TXT', 'test.tld.')
-    } catch (e) {
-      expect((e as Error).name).toEqual('NoValidDnskeyError')
-    }
+    await assert.rejects(prover.queryWithProof('TXT', 'test.tld.'), {
+      name: 'NoValidDnskeyError',
+    })
   })
 
   it('throws an exception if no valid self-signed DNSKEY records are found', async () => {
@@ -415,11 +413,9 @@ describe('dnsprovejs', () => {
       rootKey,
     )
 
-    try {
-      await prover.queryWithProof('DNSKEY', 'tld.')
-    } catch (e) {
-      expect((e as Error).name).toEqual('NoValidDsError')
-    }
+    await assert.rejects(prover.queryWithProof('DNSKEY', 'tld.'), {
+      name: 'NoValidDsError',
+    })
   })
 
   it('requires that the DNSKEY be in the chain of trust', async () => {
@@ -448,11 +444,9 @@ describe('dnsprovejs', () => {
       rootKey,
     )
 
-    try {
-      await prover.queryWithProof('DNSKEY', 'tld.')
-    } catch (e) {
-      expect((e as Error).name).toEqual('NoValidDsError')
-    }
+    await assert.rejects(prover.queryWithProof('DNSKEY', 'tld.'), {
+      name: 'NoValidDsError',
+    })
   })
 
   it('sorts RRs correctly for canonical form', () => {
@@ -462,7 +456,7 @@ describe('dnsprovejs', () => {
     // Sort and encode
     const wire = ss.toWire(true)
     const decoded = SignedSet.fromWire<DSAnswer>(wire, new Uint8Array())
-    expect(decoded.records).toStrictEqual(rrs)
+    assert.deepStrictEqual(decoded.records, rrs)
   })
 
   // Browsers have no global `Buffer` — relying on one is what broke loading
@@ -474,7 +468,7 @@ describe('dnsprovejs', () => {
       delete globalThis.Buffer
       if (typeof Buffer !== 'undefined') throw new Error('Buffer is still global')
       const { SignedSet } = await import(${JSON.stringify(
-        `${import.meta.dir}/../src/index.ts`,
+        `${import.meta.dirname}/../src/index.ts`,
       )})
       const wire = Uint8Array.from(
         ${JSON.stringify(wire)}.match(/../g).map((h) => parseInt(h, 16)),
@@ -483,11 +477,18 @@ describe('dnsprovejs', () => {
       if (again.length !== wire.length || again.some((b, i) => b !== wire[i]))
         throw new Error('the round trip changed the wire form')
     `
-    const { exitCode, stderr } = Bun.spawnSync({
-      cmd: [process.execPath, '--eval', script],
-      stderr: 'pipe',
-    })
-    expect(stderr.toString()).not.toContain('Error')
-    expect(exitCode).toBe(0)
+    const { status, stderr } = spawnSync(
+      process.execPath,
+      [
+        '--import',
+        `${import.meta.dirname}/register.ts`,
+        '--input-type=module',
+        '--eval',
+        script,
+      ],
+      { encoding: 'utf8' },
+    )
+    assert.doesNotMatch(stderr, /Error/)
+    assert.strictEqual(status, 0)
   })
 })
